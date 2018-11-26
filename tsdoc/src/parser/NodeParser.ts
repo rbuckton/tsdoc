@@ -45,6 +45,7 @@ import {
 } from '../configuration/TSDocTagDefinition';
 import { StandardTags } from '../details/StandardTags';
 import { PlainTextEmitter } from '../emitters/PlainTextEmitter';
+import { TSDocDiagnostics } from './TSDocDiagnostics';
 
 interface IFailure {
   // (We use "failureMessage" instead of "errorMessage" here so that DocErrorText doesn't
@@ -168,6 +169,7 @@ export class NodeParser {
     if (docComment.deprecatedBlock) {
       if (!PlainTextEmitter.hasAnyTextContent(docComment.deprecatedBlock)) {
         this._parserContext.log.addMessageForTokenSequence(
+          TSDocDiagnostics.missingDeprecationMessage,
           `The ${docComment.deprecatedBlock.blockTag.tagName} block must include a deprecation message,`
             + ` e.g. describing the recommended alternative`,
           docComment.deprecatedBlock.blockTag.getTokenSequence(),
@@ -179,12 +181,14 @@ export class NodeParser {
     if (docComment.inheritDocTag) {
       if (docComment.remarksBlock) {
         this._parserContext.log.addMessageForTokenSequence(
-          `A "${docComment.remarksBlock.blockTag.tagName}" block must not be used, because that`
-          + ` content is provided by the @inheritDoc tag`,
+          TSDocDiagnostics.remarksWithInheritdoc,
+          `A "${docComment.remarksBlock.blockTag.tagName}" block must not be used because that`
+          + ` content is already provided by the @inheritDoc tag`,
           docComment.remarksBlock.blockTag.getTokenSequence(), docComment.remarksBlock.blockTag);
       }
       if (PlainTextEmitter.hasAnyTextContent(docComment.summarySection)) {
         this._parserContext.log.addMessageForTextRange(
+          TSDocDiagnostics.summaryWithInheritdoc,
           'The summary section must not have any content, because that'
           + ' content is provided by the @inheritDoc tag',
           this._parserContext.commentRange);
@@ -203,10 +207,12 @@ export class NodeParser {
         // The tag is defined, but it is used incorrectly
         if (expectingInlineTag) {
           this._parserContext.log.addMessageForTokenSequence(
+            TSDocDiagnostics.inlineTagWithoutBraces,
             `The TSDoc tag "${tagName}" is an inline tag; it must be enclosed in "{ }" braces`,
             tokenSequenceForErrorContext, nodeForErrorContext);
         } else {
           this._parserContext.log.addMessageForTokenSequence(
+            TSDocDiagnostics.blockTagWithBraces,
             `The TSDoc tag "${tagName}" is not an inline tag; it must not be enclosed in "{ }" braces`,
             tokenSequenceForErrorContext, nodeForErrorContext);
         }
@@ -215,6 +221,7 @@ export class NodeParser {
           if (!this._parserContext.configuration.isTagSupported(tagDefinition)) {
             // The tag is defined, but not supported
             this._parserContext.log.addMessageForTokenSequence(
+              TSDocDiagnostics.unsupportedTag,
               `The TSDoc tag "${tagName}" is not supported by this tool`,
               tokenSequenceForErrorContext, nodeForErrorContext);
           }
@@ -224,6 +231,7 @@ export class NodeParser {
       // The tag is not defined
       if (!this._parserContext.configuration.validation.ignoreUndefinedTags) {
         this._parserContext.log.addMessageForTokenSequence(
+          TSDocDiagnostics.undefinedTag,
           `The TSDoc tag "${tagName}" is not defined in this configuration`,
           tokenSequenceForErrorContext, nodeForErrorContext);
       }

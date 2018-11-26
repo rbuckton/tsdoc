@@ -1,11 +1,13 @@
 import { TextRange, ITextLocation } from './TextRange';
 import { TokenSequence } from './TokenSequence';
 import { DocNode } from '../nodes/DocNode';
+import { IDiagnosticDefinition } from './TSDocDiagnostics';
 
 /**
  * Constructor parameters for {@link ParserMessage}.
  */
 export interface IParserMessageParameters {
+  diagnosticDefinition: IDiagnosticDefinition;
   messageText: string;
   textRange: TextRange;
   tokenSequence?: TokenSequence;

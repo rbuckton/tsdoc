@@ -1,6 +1,7 @@
 import { DocNodeKind, DocNode, IDocNodeParsedParameters } from './DocNode';
 import { TokenSequence } from '../parser/TokenSequence';
 import { DocExcerpt, ExcerptKind } from './DocExcerpt';
+import { IDiagnosticDefinition } from '../parser/TSDocDiagnostics';
 
 /**
  * Constructor parameters for {@link DocErrorText}.
@@ -8,6 +9,7 @@ import { DocExcerpt, ExcerptKind } from './DocExcerpt';
 export interface IDocErrorTextParsedParameters extends IDocNodeParsedParameters {
   textExcerpt: TokenSequence;
 
+  diagnosticDefinition: IDiagnosticDefinition;
   errorMessage: string;
   errorLocation: TokenSequence;
 }
@@ -20,6 +22,7 @@ export class DocErrorText extends DocNode {
   private _text: string | undefined;
   private readonly _textExcerpt: DocExcerpt;
 
+  private readonly _diagnosticDefinition: IDiagnosticDefinition;
   private readonly _errorMessage: string;
   private readonly _errorLocation: TokenSequence;
 
@@ -36,6 +39,7 @@ export class DocErrorText extends DocNode {
       content: parameters.textExcerpt
     });
 
+    this._diagnosticDefinition = parameters.diagnosticDefinition;
     this._errorMessage = parameters.errorMessage;
     this._errorLocation = parameters.errorLocation;
   }
@@ -65,7 +69,14 @@ export class DocErrorText extends DocNode {
   }
 
   /**
-   * A description of why the character could not be parsed.
+   * Returns the diagnostic definition for this error message.
+   */
+  public get diagnosticDefinition(): IDiagnosticDefinition {
+    return this._diagnosticDefinition;
+  }
+
+  /**
+   * A description of why the character(s) could not be parsed.
    */
   public get errorMessage(): string {
     return this._errorMessage;
