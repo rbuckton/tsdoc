@@ -24,7 +24,8 @@
         "${fileBasename}"
       ],
       "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen"
+      "internalConsoleOptions": "neverOpen",
+      "smartStep": false
     }
   ]
 }
