@@ -1,10 +1,10 @@
 import { StartResult, ContinueResult } from "./IBlockSyntaxParser";
 import { BlockParser } from "../BlockParser";
-import { SyntaxKind } from "../nodes/SyntaxKind";
-import { Node } from "../nodes/Node";
-import { MarkdownList } from "../nodes/MarkdownList";
-import { MarkdownListItem } from "../nodes/MarkdownListItem";
-import { Block } from "../nodes/Block";
+import { SyntaxKind } from "../../nodes/SyntaxKind";
+import { Node } from "../../nodes/Node";
+import { MarkdownList } from "../../nodes/MarkdownList";
+import { MarkdownListItem } from "../../nodes/MarkdownListItem";
+import { Block } from "../../nodes/Block";
 
 export namespace MarkdownListParser {
     export const kind: SyntaxKind.MarkdownList = SyntaxKind.MarkdownList;

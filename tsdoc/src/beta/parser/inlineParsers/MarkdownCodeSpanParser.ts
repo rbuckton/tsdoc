@@ -1,9 +1,9 @@
 import { InlineParser } from "../InlineParser";
-import { MarkdownCodeSpan } from "../nodes/MarkdownCodeSpan";
+import { MarkdownCodeSpan } from "../../nodes/MarkdownCodeSpan";
 import { Scanner } from "../Scanner";
 import { MarkdownCodeInlineScanner } from "../scanners/MarkdownCodeInlineScanner";
 import { Token } from "../Token";
-import { Run } from "../nodes/Run";
+import { Run } from "../../nodes/Run";
 
 export namespace MarkdownCodeSpanParser {
     export function tryParse(parser: InlineParser): MarkdownCodeSpan | Run | undefined {
@@ -14,17 +14,19 @@ export namespace MarkdownCodeSpanParser {
             const backtickCount: number = scanner.tokenLength;
             if (scanner.rescan(MarkdownCodeInlineScanner.rescanCodeSpan) === Token.CodeSpan) {
                 const text: string = scanner.getTokenValue();
+                const end: number = scanner.pos;
                 scanner.scan();
 
-                return parser.setNodePos(new MarkdownCodeSpan({ backtickCount, text }), pos, scanner.startPos);
+                return new MarkdownCodeSpan({ pos, end, backtickCount, text });
             }
 
             const text: string = scanner.getTokenValue();
+            const end: number = scanner.pos;
             scanner.scan();
 
-            const node: Run = new Run();
+            const node: Run = new Run({ pos, end });
             parser.getParserState(node).text = text;
-            return parser.setNodePos(node, pos, scanner.startPos);
+            return node;
         }
         return undefined;
     }

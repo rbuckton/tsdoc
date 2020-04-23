@@ -1,6 +1,6 @@
 import { SyntaxKind } from "./SyntaxKind";
 import { LinkBase, ILinkBaseParameters } from "./LinkBase";
-import { TSDocPrinter } from "../TSDocPrinter";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 export interface IMarkdownImageParameters extends ILinkBaseParameters {
 }

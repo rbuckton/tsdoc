@@ -1,6 +1,6 @@
 import { SyntaxKind } from "./SyntaxKind";
 import { Block, IBlockParameters } from "./Block";
-import { TSDocPrinter } from "../TSDocPrinter";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 export interface IMarkdownParagraphParameters extends IBlockParameters {
 }

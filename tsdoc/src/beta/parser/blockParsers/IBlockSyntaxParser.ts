@@ -1,5 +1,5 @@
 import { BlockParser } from "../BlockParser";
-import { Block } from "../nodes/Block";
+import { Block } from "../../nodes/Block";
 
 export const enum StartResult {
     Unmatched = 0,  // Block was not started

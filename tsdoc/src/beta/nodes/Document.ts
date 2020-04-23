@@ -2,9 +2,9 @@ import { SyntaxKind } from "./SyntaxKind";
 import { Node, DocumentPosition } from "./Node";
 import { Block, IBlockParameters } from "./Block";
 import { MarkdownLinkReference } from "./MarkdownLinkReference";
-import { MarkdownUtils } from "../utils/MarkdownUtils";
+import { MarkdownUtils } from "../parser/utils/MarkdownUtils";
 import { MarkdownLinkLabel } from "./MarkdownLinkLabel";
-import { TSDocPrinter } from "../TSDocPrinter";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 export interface IDocumentParameters extends IBlockParameters {
     text?: string;

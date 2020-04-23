@@ -1,8 +1,8 @@
 import { SyntaxKind } from "./SyntaxKind";
 import { INodeParameters } from "./Node";
 import { Block } from "./Block";
-import { IParserState } from "../ParserBase";
-import { TSDocPrinter } from "../TSDocPrinter";
+import { IParserState } from "../parser/ParserBase";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 export interface IMarkdownHtmlBlockParameters extends INodeParameters {
     html?: string;

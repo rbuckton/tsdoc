@@ -1,8 +1,8 @@
 import { Inline } from "./Inline";
 import { SyntaxKind } from "./SyntaxKind";
 import { INodeParameters } from "./Node";
-import { TSDocPrinter } from "../TSDocPrinter";
-import { StringUtils } from "../utils/StringUtils";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
+import { StringUtils } from "../parser/utils/StringUtils";
 
 export interface IMarkdownCodeSpanParameters extends INodeParameters {
     backtickCount?: number;

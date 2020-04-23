@@ -1,7 +1,7 @@
 import { Inline } from "./Inline";
 import { SyntaxKind } from "./SyntaxKind";
 import { INodeParameters } from "./Node";
-import { TSDocPrinter } from "../TSDocPrinter";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 export interface IMarkdownHtmlInlineParameters extends INodeParameters {
     html?: string;

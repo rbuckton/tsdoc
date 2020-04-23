@@ -1,8 +1,8 @@
 import { Inline } from "./Inline";
 import { SyntaxKind } from "./SyntaxKind";
 import { INodeParameters } from "./Node";
-import { Token } from "../Token";
-import { TSDocPrinter } from "../TSDocPrinter";
+import { Token } from "../parser/Token";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 export interface IMarkdownAutoLinkParameters extends INodeParameters {
     destination?: string;

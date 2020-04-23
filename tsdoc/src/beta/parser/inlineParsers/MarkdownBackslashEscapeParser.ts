@@ -1,6 +1,6 @@
 import { InlineParser } from "../InlineParser";
 import { Token } from "../Token";
-import { Run } from "../nodes/Run";
+import { Run } from "../../nodes/Run";
 import { Scanner } from "../Scanner";
 import { MarkdownBackslashEscapeScanner } from "../scanners/MarkdownBackslashEscapeScanner";
 
@@ -10,11 +10,12 @@ export namespace MarkdownBackslashEscapeParser {
         const scanner: Scanner = parser.scanner;
         if (scanner.rescan(MarkdownBackslashEscapeScanner.rescanBackslashEscape) === Token.BackslashEscapeCharacter) {
             const pos: number = scanner.startPos;
+            const end: number = scanner.pos;
             const text: string = scanner.getTokenValue();
             scanner.scan();
-            const node: Run = new Run();
+            const node: Run = new Run({ pos, end });
             parser.getParserState(node).text = text;
-            return parser.setNodePos(node, pos, scanner.startPos);
+            return node;
         }
         return undefined;
     }

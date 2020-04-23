@@ -1,9 +1,9 @@
 import { SyntaxKind } from "./SyntaxKind";
 import { ListItemBase, IListItemBaseParameters } from "./ListItemBase";
 import { ListMarker } from "./MarkdownList";
-import { TSDocPrinter } from "../TSDocPrinter";
-import { Token } from "../Token";
-import { StringUtils } from "../utils/StringUtils";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
+import { Token } from "../parser/Token";
+import { StringUtils } from "../parser/utils/StringUtils";
 
 export interface IMarkdownListItemParameters extends IListItemBaseParameters {
     readonly listMarker: ListMarker;

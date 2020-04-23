@@ -1,9 +1,9 @@
 import { StartResult, ContinueResult } from "./IBlockSyntaxParser";
 import { Token } from "../Token";
 import { BlockParser } from "../BlockParser";
-import { SyntaxKind } from "../nodes/SyntaxKind";
-import { Node } from "../nodes/Node";
-import { MarkdownBlockQuote } from "../nodes/MarkdownBlockQuote";
+import { SyntaxKind } from "../../nodes/SyntaxKind";
+import { Node } from "../../nodes/Node";
+import { MarkdownBlockQuote } from "../../nodes/MarkdownBlockQuote";
 import { Scanner } from "../Scanner";
 
 export namespace MarkdownBlockQuoteParser {
@@ -45,9 +45,9 @@ export namespace MarkdownBlockQuoteParser {
                 scanner.scanColumns(1);
             }
             return ContinueResult.Matched;
-        } else {
-            return ContinueResult.Unmatched;
         }
+
+        return ContinueResult.Unmatched;
     }
 
     export function finish(_parser: BlockParser, _block: MarkdownBlockQuote): void {

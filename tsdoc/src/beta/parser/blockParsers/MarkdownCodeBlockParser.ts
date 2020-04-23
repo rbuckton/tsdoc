@@ -1,12 +1,12 @@
 import { StartResult, ContinueResult } from "./IBlockSyntaxParser";
 import { BlockParser } from "../BlockParser";
-import { SyntaxKind } from "../nodes/SyntaxKind";
+import { SyntaxKind } from "../../nodes/SyntaxKind";
 import { Token } from "../Token";
 import { MarkdownUtils } from "../utils/MarkdownUtils";
 import { MarkdownCodeBlockScanner } from "../scanners/MarkdownCodeBlockScanner";
 import { Scanner } from "../Scanner";
-import { Node } from "../nodes/Node";
-import { MarkdownCodeBlock, ICodeFence } from "../nodes/MarkdownCodeBlock";
+import { Node } from "../../nodes/Node";
+import { MarkdownCodeBlock, ICodeFence } from "../../nodes/MarkdownCodeBlock";
 import { ContentWriter } from "../ContentWriter";
 
 export namespace MarkdownCodeBlockParser {

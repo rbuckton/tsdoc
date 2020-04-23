@@ -1,6 +1,6 @@
 import { Scanner, IScannerState } from "./Scanner";
 import { Token } from "./Token";
-import { SyntaxKind } from "./nodes/SyntaxKind";
+import { SyntaxKind } from "../nodes/SyntaxKind";
 import { StartResult, ContinueResult, IBlockSyntaxParser } from "./blockParsers/IBlockSyntaxParser";
 import { DocumentParser } from "./blockParsers/DocumentParser";
 import { DocBlockTagParser } from "./blockParsers/DocBlockTagParser";
@@ -13,11 +13,11 @@ import { MarkdownListParser } from "./blockParsers/MarkdownListParser";
 import { MarkdownListItemParser } from "./blockParsers/MarkdownListItemParser";
 import { MarkdownParagraphParser } from "./blockParsers/MarkdownParagraphParser";
 import { InlineParser } from "./InlineParser";
-import { Document } from "./nodes/Document";
-import { Node } from "./nodes/Node";
-import { MarkdownCodeBlock } from "./nodes/MarkdownCodeBlock";
-import { MarkdownParagraph } from "./nodes/MarkdownParagraph";
-import { Block } from "./nodes/Block";
+import { Document } from "../nodes/Document";
+import { Node } from "../nodes/Node";
+import { MarkdownCodeBlock } from "../nodes/MarkdownCodeBlock";
+import { MarkdownParagraph } from "../nodes/MarkdownParagraph";
+import { Block } from "../nodes/Block";
 import { ContentWriter } from "./ContentWriter";
 import { IMapping } from "./Preprocessor";
 import { ParserBase } from "./ParserBase";
@@ -115,8 +115,7 @@ export class BlockParser extends ParserBase {
         this._blank = false;
         this._lastNextNonIndentPos = -1;
         this._previousLineEnd = 0;
-        this._root = new Document({ text: this.scanner.text });
-        this.setNodePos(this._root, 0);
+        this._root = new Document({ pos: 0, text: this.scanner.text });
         this._tip = this._root;
         this._lastMatch = this._root;
         this._hasUnmatchedBlocks = false;
@@ -220,7 +219,7 @@ export class BlockParser extends ParserBase {
             blockSyntaxParser.acceptLine(this, block);
         } else if (!Token.isLineEnding(this.scanner.token()) && !this._blank) {
             const pos: number = this.indentStartPos;
-            const block: MarkdownParagraph = this.pushBlock(this.setNodePos(new MarkdownParagraph(), pos, pos));
+            const block: MarkdownParagraph = this.pushBlock(new MarkdownParagraph({ pos, end: pos }));
             MarkdownParagraphParser.acceptLine(this, block);
         }
         this.scanner.scanLine();
@@ -246,7 +245,7 @@ export class BlockParser extends ParserBase {
     public finish(block: Block, end: number = this._previousLineEnd): void {
         const parent: Block | undefined = block.parentBlock;
         this.getParserState(block).closed = true;
-        this.setNodeEnd(block, end);
+        block.end = end;
         try {
             const blockSyntaxParser: IBlockSyntaxParser<Block> | undefined = this._blockSyntaxParserMap.get(block.kind);
             if (blockSyntaxParser) {
@@ -270,7 +269,10 @@ export class BlockParser extends ParserBase {
 
     public pushBlock<T extends Block>(block: T, pos?: number, end?: number): T {
         if (pos !== undefined) {
-            this.setNodePos(block, pos, end);
+            block.pos = pos;
+            if (end !== undefined) {
+                block.end = end;
+            }
         }
         while (this._tip && !this._tip.canHaveChild(block)) {
             const parent: Block | undefined = this._tip.parentBlock;

@@ -4,9 +4,9 @@ import { MarkdownLinkTitle } from "./MarkdownLinkTitle";
 import { MarkdownLinkLabel } from "./MarkdownLinkLabel";
 import { Syntax } from "./Syntax";
 import { Node } from "./Node";
-import { MarkdownUtils } from "../utils/MarkdownUtils";
+import { MarkdownUtils } from "../parser/utils/MarkdownUtils";
 import { MarkdownLinkReference } from "./MarkdownLinkReference";
-import { IParserState } from "../ParserBase";
+import { IParserState } from "../parser/ParserBase";
 
 export interface ILinkBaseParameters extends IInlineParameters {
     destination?: MarkdownLinkDestination;

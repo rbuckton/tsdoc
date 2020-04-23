@@ -1,5 +1,5 @@
 import { BlockParser } from "../../BlockParser";
-import { Document } from "../../nodes/Document";
+import { Document } from "../../../nodes/Document";
 import { render } from "./renderer";
 import { SnapshotSerializer } from "../serializers";
 

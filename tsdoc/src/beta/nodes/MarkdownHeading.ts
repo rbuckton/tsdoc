@@ -1,8 +1,8 @@
 import { Block, IBlockParameters } from "./Block";
 import { SyntaxKind } from "./SyntaxKind";
-import { Token } from "../Token";
-import { TSDocPrinter } from "../TSDocPrinter";
-import { StringUtils } from "../utils/StringUtils";
+import { Token } from "../parser/Token";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
+import { StringUtils } from "../parser/utils/StringUtils";
 
 export interface IMarkdownHeadingParameters extends IBlockParameters {
     headingToken: Token.Heading;

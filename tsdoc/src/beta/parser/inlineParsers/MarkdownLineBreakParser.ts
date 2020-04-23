@@ -2,22 +2,23 @@ import { InlineParser } from "../InlineParser";
 import { Token } from "../Token";
 import { Scanner } from "../Scanner";
 import { MarkdownLineBreakScanner } from "../scanners/MarkdownLineBreakScanner";
-import { MarkdownSoftBreak } from "../nodes/MarkdownSoftBreak";
-import { MarkdownHardBreak } from "../nodes/MarkdownHardBreak";
+import { MarkdownSoftBreak } from "../../nodes/MarkdownSoftBreak";
+import { MarkdownHardBreak } from "../../nodes/MarkdownHardBreak";
 
 export namespace MarkdownLineBreakParser {
     export function tryParse(parser: InlineParser): MarkdownSoftBreak | MarkdownHardBreak | undefined {
         const scanner: Scanner = parser.scanner;
-        const pos: number = scanner.startPos;
         const token: Token = scanner.rescan(MarkdownLineBreakScanner.rescanLineBreak);
+        const pos: number = scanner.startPos;
+        const end: number = scanner.pos;
         switch (token) {
             case Token.NewLineTrivia:
                 scanner.scan();
-                return parser.setNodePos(new MarkdownSoftBreak(), pos, scanner.startPos);
+                return new MarkdownSoftBreak({ pos, end });
             case Token.SpaceSpaceHardBreakToken:
             case Token.BackslashHardBreakToken:
                 scanner.scan();
-                return parser.setNodePos(new MarkdownHardBreak({ breakToken: token }), pos, scanner.startPos);
+                return new MarkdownHardBreak({ pos, end, breakToken: token });
         }
 
         return undefined;

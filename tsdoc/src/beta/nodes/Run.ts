@@ -1,8 +1,8 @@
 import { Inline } from "./Inline";
 import { SyntaxKind } from "./SyntaxKind";
 import { INodeParameters } from "./Node";
-import { IParserState } from "../ParserBase";
-import { TSDocPrinter } from "../TSDocPrinter";
+import { IParserState } from "../parser/ParserBase";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 export interface IRunParameters extends INodeParameters {
     text?: string;

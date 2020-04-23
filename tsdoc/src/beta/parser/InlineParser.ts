@@ -9,17 +9,17 @@ import { MarkdownLinkParser } from "./inlineParsers/MarkdownLinkParser";
 import { MarkdownAutoLinkParser } from "./inlineParsers/MarkdownAutoLinkParser";
 import { MarkdownHtmlInlineParser } from "./inlineParsers/MarkdownHtmlInlineParser";
 import { MarkdownCharacterEntityParser } from "./inlineParsers/MarkdownCharacterEntityParser";
-import { Inline } from "./nodes/Inline";
-import { Run } from "./nodes/Run";
-import { MarkdownLinkReference } from "./nodes/MarkdownLinkReference";
-import { Block } from "./nodes/Block";
+import { Inline } from "../nodes/Inline";
+import { Run } from "../nodes/Run";
+import { MarkdownLinkReference } from "../nodes/MarkdownLinkReference";
+import { Block } from "../nodes/Block";
 import { IMapping } from "./Preprocessor";
 import { MarkdownLinkReferenceParser } from "./inlineParsers/MarkdownLinkReferenceParser";
 import { ParserBase } from "./ParserBase";
-import { Content } from "./nodes/Content";
-import { Document } from "./nodes/Document";
-import { MarkdownHardBreak } from "./nodes/MarkdownHardBreak";
-import { MarkdownSoftBreak } from "./nodes/MarkdownSoftBreak";
+import { Content } from "../nodes/Content";
+import { Document } from "../nodes/Document";
+import { MarkdownHardBreak } from "../nodes/MarkdownHardBreak";
+import { MarkdownSoftBreak } from "../nodes/MarkdownSoftBreak";
 
 export interface IDelimiterFrame {
     prev?: IDelimiterFrame;
@@ -80,11 +80,10 @@ export class InlineParser extends ParserBase {
             } else {
                 if (lastRun) {
                     this.getParserState(lastRun).text! += this.scanner.getTokenText();
-                    this.setNodeEnd(lastRun, this.scanner.pos);
+                    lastRun.end = this.scanner.pos;
                 } else {
-                    lastRun = new Run();
+                    lastRun = new Run({ pos: this.scanner.startPos, end: this.scanner.pos });
                     this.getParserState(lastRun).text = this.scanner.getTokenText();
-                    this.setNodePos(lastRun, this.scanner.startPos, this.scanner.pos);
                     block.appendChild(lastRun);
                 }
                 this.scanner.scan();
@@ -252,7 +251,7 @@ export class InlineParser extends ParserBase {
                 if (child instanceof Run) {
                     if (lastRun) {
                         this.getParserState(lastRun).text! += child.text;
-                        this.getParserState(lastRun).end = child.end;
+                        lastRun.end = child.end;
                         child.removeNode();
                     } else {
                         lastRun = child;

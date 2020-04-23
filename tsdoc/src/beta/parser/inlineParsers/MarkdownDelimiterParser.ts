@@ -5,10 +5,10 @@ import { CharacterCodes } from "../CharacterCodes";
 import { UnicodeUtils } from "../utils/UnicodeUtils";
 import { Scanner } from "../Scanner";
 import { MarkdownDelimiterScanner } from "../scanners/MarkdownDelimiterScanner";
-import { MarkdownStrongSpan } from "../nodes/MarkdownStrongSpan";
-import { MarkdownEmSpan } from "../nodes/MarkdownEmSpan";
-import { Run } from "../nodes/Run";
-import { Content } from "../nodes/Content";
+import { MarkdownStrongSpan } from "../../nodes/MarkdownStrongSpan";
+import { MarkdownEmSpan } from "../../nodes/MarkdownEmSpan";
+import { Run } from "../../nodes/Run";
+import { Content } from "../../nodes/Content";
 
 export namespace MarkdownDelimiterParser {
     export function tryParse(parser: InlineParser): Run | undefined {
@@ -32,12 +32,13 @@ export namespace MarkdownDelimiterParser {
         const canOpen: boolean = leftFlank && (!isUnderscore || !rightFlank || leadIsPunctuation);
         const canClose: boolean = rightFlank && (!isUnderscore || !leftFlank || trailIsPunctuation);
         const pos: number = scanner.startPos;
+        const end: number = scanner.pos;
         const text: string = scanner.getTokenText();
         const delimiterCount: number = scanner.tokenLength;
         scanner.scan();
-        const node: Run = new Run();
+        
+        const node: Run = new Run({ pos, end });
         parser.getParserState(node).text = text;
-        parser.setNodePos(node, pos, scanner.startPos);
         if (canOpen || canClose) {
             parser.pushDelimiter(node, token, delimiterCount, canOpen, canClose);
         }
@@ -63,18 +64,18 @@ export namespace MarkdownDelimiterParser {
         // remove used delimiters from stack elts and inlines
         opener.remaining -= delimiterCount;
         parser.getParserState(openerRun).text = openerRun.text.slice(0, -delimiterCount);
-        parser.setNodeEnd(openerRun, openerRun.end - delimiterCount);
+        openerRun.end -= delimiterCount;
         
         closer.remaining -= delimiterCount;
         parser.getParserState(closerRun).text = closerRun.text.slice(0, -delimiterCount);
-        parser.setNodePos(closerRun, closerRun.pos + delimiterCount);
+        closerRun.pos += delimiterCount;
 
         // build contents for new emph element
+        const pos: number = openerRun.pos + opener.remaining;
+        const end: number = closerRun.pos + closer.remaining;
         const node: MarkdownStrongSpan | MarkdownEmSpan = delimiterCount === 1 ?
-            new MarkdownEmSpan({ emphasisToken: closer.token }) :
-            new MarkdownStrongSpan({ emphasisToken: closer.token });
-
-        parser.setNodePos(node, openerRun.pos + opener.remaining, closerRun.pos + closer.remaining);
+            new MarkdownEmSpan({ pos, end, emphasisToken: closer.token }) :
+            new MarkdownStrongSpan({ pos, end, emphasisToken: closer.token });
 
         // move everything between the open and closer into the inline
         let current: Content | undefined = openerRun.nextSibling;

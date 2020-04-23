@@ -1,20 +1,20 @@
-import { Node } from "../../nodes/Node";
-import { SyntaxKind } from "../../nodes/SyntaxKind";
-import { MarkdownCodeBlock } from "../../nodes/MarkdownCodeBlock";
-import { Run } from "../../nodes/Run";
-import { MarkdownList } from "../../nodes/MarkdownList";
-import { MarkdownParagraph } from "../../nodes/MarkdownParagraph";
-import { MarkdownHeading } from "../../nodes/MarkdownHeading";
-import { MarkdownCodeSpan } from "../../nodes/MarkdownCodeSpan";
-import { MarkdownLink } from "../../nodes/MarkdownLink";
-import { MarkdownEmSpan } from "../../nodes/MarkdownEmSpan";
-import { MarkdownThematicBreak } from "../../nodes/MarkdownThematicBreak";
-import { MarkdownImage } from "../../nodes/MarkdownImage";
-import { MarkdownBlockQuote } from "../../nodes/MarkdownBlockQuote";
-import { MarkdownListItem } from "../../nodes/MarkdownListItem";
-import { MarkdownHtmlInline } from "../../nodes/MarkdownHtmlInline";
-import { MarkdownHtmlBlock } from "../../nodes/MarkdownHtmlBlock";
-import { MarkdownAutoLink } from "../../nodes/MarkdownAutoLink";
+import { Node } from "../../../nodes/Node";
+import { SyntaxKind } from "../../../nodes/SyntaxKind";
+import { MarkdownCodeBlock } from "../../../nodes/MarkdownCodeBlock";
+import { Run } from "../../../nodes/Run";
+import { MarkdownList } from "../../../nodes/MarkdownList";
+import { MarkdownParagraph } from "../../../nodes/MarkdownParagraph";
+import { MarkdownHeading } from "../../../nodes/MarkdownHeading";
+import { MarkdownCodeSpan } from "../../../nodes/MarkdownCodeSpan";
+import { MarkdownLink } from "../../../nodes/MarkdownLink";
+import { MarkdownEmSpan } from "../../../nodes/MarkdownEmSpan";
+import { MarkdownThematicBreak } from "../../../nodes/MarkdownThematicBreak";
+import { MarkdownImage } from "../../../nodes/MarkdownImage";
+import { MarkdownBlockQuote } from "../../../nodes/MarkdownBlockQuote";
+import { MarkdownListItem } from "../../../nodes/MarkdownListItem";
+import { MarkdownHtmlInline } from "../../../nodes/MarkdownHtmlInline";
+import { MarkdownHtmlBlock } from "../../../nodes/MarkdownHtmlBlock";
+import { MarkdownAutoLink } from "../../../nodes/MarkdownAutoLink";
 
 // emulates the commonmark renderer for tests
 

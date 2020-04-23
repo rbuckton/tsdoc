@@ -1,5 +1,5 @@
 import { INodeParameters, Node } from "./Node";
-import { TSDocPrinter } from "../TSDocPrinter";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 export interface IContentParameters extends INodeParameters {
 }

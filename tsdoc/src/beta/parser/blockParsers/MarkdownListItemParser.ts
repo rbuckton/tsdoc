@@ -1,11 +1,11 @@
 import { StartResult, ContinueResult } from "./IBlockSyntaxParser";
 import { BlockParser } from "../BlockParser";
-import { SyntaxKind } from "../nodes/SyntaxKind";
+import { SyntaxKind } from "../../nodes/SyntaxKind";
 import { Token } from "../Token";
 import { IScannerState, Scanner } from "../Scanner";
-import { Node } from "../nodes/Node";
-import { MarkdownListItem } from "../nodes/MarkdownListItem";
-import { ListMarker, MarkdownList } from "../nodes/MarkdownList";
+import { Node } from "../../nodes/Node";
+import { MarkdownListItem } from "../../nodes/MarkdownListItem";
+import { ListMarker, MarkdownList } from "../../nodes/MarkdownList";
 import { Preprocessor } from "../Preprocessor";
 import { UnicodeUtils } from "../utils/UnicodeUtils";
 

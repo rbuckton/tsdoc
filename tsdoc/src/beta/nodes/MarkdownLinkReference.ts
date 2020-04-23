@@ -4,7 +4,7 @@ import { MarkdownLinkDestination } from "./MarkdownLinkDestination";
 import { MarkdownLinkTitle, MarkdownLinkTitleQuoteStyle } from "./MarkdownLinkTitle";
 import { Syntax } from "./Syntax";
 import { Block, IBlockParameters } from "./Block";
-import { TSDocPrinter } from "../TSDocPrinter";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 export interface IMarkdownLinkReferenceParameters extends IBlockParameters {
     label?: MarkdownLinkLabel;

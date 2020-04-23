@@ -1,7 +1,7 @@
 import { Inline, IInlineParameters } from "./Inline";
 import { SyntaxKind } from "./SyntaxKind";
-import { Token } from "../Token";
-import { TSDocPrinter } from "../TSDocPrinter";
+import { Token } from "../parser/Token";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 export interface IMarkdownHardBreakParameters extends IInlineParameters {
     breakToken?: Token.HardBreakToken;

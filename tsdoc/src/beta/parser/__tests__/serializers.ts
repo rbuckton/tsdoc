@@ -1,26 +1,26 @@
-import { SyntaxKind } from "../nodes/SyntaxKind";
+import { SyntaxKind } from "../../nodes/SyntaxKind";
 import { Token } from "../Token";
 import { ContentWriter } from "../ContentWriter";
-import { Node } from "../nodes/Node";
-import { MarkdownCodeBlock } from "../nodes/MarkdownCodeBlock";
-import { MarkdownHeading } from "../nodes/MarkdownHeading";
-import { MarkdownList } from "../nodes/MarkdownList";
+import { Node } from "../../nodes/Node";
+import { MarkdownCodeBlock } from "../../nodes/MarkdownCodeBlock";
+import { MarkdownHeading } from "../../nodes/MarkdownHeading";
+import { MarkdownList } from "../../nodes/MarkdownList";
 
 import PrettyFormat = require("pretty-format");
-import { Document } from "../nodes/Document";
-import { MarkdownCodeSpan } from "../nodes/MarkdownCodeSpan";
-import { Run } from "../nodes/Run";
-import { MarkdownHtmlInline } from "../nodes/MarkdownHtmlInline";
-import { MarkdownAutoLink } from "../nodes/MarkdownAutoLink";
-import { MarkdownLinkLabel } from "../nodes/MarkdownLinkLabel";
-import { MarkdownLinkTitle } from "../nodes/MarkdownLinkTitle";
-import { MarkdownLinkDestination } from "../nodes/MarkdownLinkDestination";
-import { MarkdownLinkReference } from "../nodes/MarkdownLinkReference";
-import { MarkdownLink } from "../nodes/MarkdownLink";
-import { MarkdownImage } from "../nodes/MarkdownImage";
+import { Document } from "../../nodes/Document";
+import { MarkdownCodeSpan } from "../../nodes/MarkdownCodeSpan";
+import { Run } from "../../nodes/Run";
+import { MarkdownHtmlInline } from "../../nodes/MarkdownHtmlInline";
+import { MarkdownAutoLink } from "../../nodes/MarkdownAutoLink";
+import { MarkdownLinkLabel } from "../../nodes/MarkdownLinkLabel";
+import { MarkdownLinkTitle } from "../../nodes/MarkdownLinkTitle";
+import { MarkdownLinkDestination } from "../../nodes/MarkdownLinkDestination";
+import { MarkdownLinkReference } from "../../nodes/MarkdownLinkReference";
+import { MarkdownLink } from "../../nodes/MarkdownLink";
+import { MarkdownImage } from "../../nodes/MarkdownImage";
 import { IParserState, ParserBase } from "../ParserBase";
-import { Content } from "../nodes/Content";
-import { MarkdownListItem } from "../nodes/MarkdownListItem";
+import { Content } from "../../nodes/Content";
+import { MarkdownListItem } from "../../nodes/MarkdownListItem";
 export type Config = PrettyFormat.Config;
 export type Printer = (value: unknown, config: Config, indentation: string, depth: number, refs: ReadonlyArray<object>) => string;
 
@@ -326,7 +326,7 @@ function markdownLinkLabelToSnapshot(node: MarkdownLinkLabel): object {
 }
 
 function markdownLinkTitleToSnapshot(node: MarkdownLinkTitle): object {
-    const { MarkdownLinkTitleQuoteStyle } = jest.requireActual("../nodes/MarkdownLinkTitle") as typeof import("../nodes/MarkdownLinkTitle");
+    const { MarkdownLinkTitleQuoteStyle } = jest.requireActual("../../nodes/MarkdownLinkTitle") as typeof import("../../nodes/MarkdownLinkTitle");
     return {
         ...nodeToSnapshotCore(node),
         text: node.text,

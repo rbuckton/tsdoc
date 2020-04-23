@@ -2,7 +2,7 @@ import { InlineParser } from "../InlineParser";
 import { Scanner } from "../Scanner";
 import { MarkdownLinkScanner } from "../scanners/MarkdownLinkScanner";
 import { Token } from "../Token";
-import { MarkdownLinkDestination } from "../nodes/MarkdownLinkDestination";
+import { MarkdownLinkDestination } from "../../nodes/MarkdownLinkDestination";
 import { MarkdownUtils } from "../utils/MarkdownUtils";
 
 export namespace MarkdownLinkDestinationParser {
@@ -19,8 +19,6 @@ export namespace MarkdownLinkDestinationParser {
         const bracketed: boolean = token === Token.LessThanToken;
         scanner.scan();
 
-        const node: MarkdownLinkDestination = new MarkdownLinkDestination({ href, bracketed });
-        parser.setParserState(node, { pos, end });
-        return node;
+        return new MarkdownLinkDestination({ pos, end, href, bracketed });
     }
 }

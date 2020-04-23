@@ -1,7 +1,7 @@
 import { SyntaxKind } from "./SyntaxKind";
 import { Inline, IInlineParameters } from "./Inline";
-import { Token } from "../Token";
-import { TSDocPrinter } from "../TSDocPrinter";
+import { Token } from "../parser/Token";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 export interface IMarkdownStrongSpanParameters extends IInlineParameters {
     emphasisToken?: Token.EmphasisToken;

@@ -1,5 +1,5 @@
 import { InlineParser } from "../InlineParser";
-import { MarkdownHtmlInline } from "../nodes/MarkdownHtmlInline";
+import { MarkdownHtmlInline } from "../../nodes/MarkdownHtmlInline";
 import { Scanner } from "../Scanner";
 import { Token } from "../Token";
 import { MarkdownHtmlScanner } from "../scanners/MarkdownHtmlScanner";
@@ -96,7 +96,8 @@ export namespace MarkdownHtmlInlineParser {
                 scanner.scan();
                 break;
         }
-        const html: string = scanner.slice(pos, scanner.startPos);
-        return parser.setNodePos(new MarkdownHtmlInline({ html }), pos, scanner.startPos);
+        const end: number = scanner.startPos;
+        const html: string = scanner.slice(pos, end);
+        return new MarkdownHtmlInline({ pos, end, html });
     }
 }

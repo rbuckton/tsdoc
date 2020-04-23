@@ -2,7 +2,7 @@ import { InlineParser } from "../InlineParser";
 import { Token } from "../Token";
 import { Scanner } from "../Scanner";
 import { MarkdownLinkScanner } from "../scanners/MarkdownLinkScanner";
-import { MarkdownLinkTitle, MarkdownLinkTitleQuoteStyle } from "../nodes/MarkdownLinkTitle";
+import { MarkdownLinkTitle, MarkdownLinkTitleQuoteStyle } from "../../nodes/MarkdownLinkTitle";
 import { MarkdownUtils } from "../utils/MarkdownUtils";
 
 export namespace MarkdownLinkTitleParser {
@@ -23,8 +23,6 @@ export namespace MarkdownLinkTitleParser {
 
         scanner.scan();
 
-        const node: MarkdownLinkTitle = new MarkdownLinkTitle({ text, quoteStyle });
-        parser.setParserState(node, { pos, end });
-        return node;
+        return new MarkdownLinkTitle({ pos, end, text, quoteStyle });
     }
 }

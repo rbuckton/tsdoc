@@ -1,11 +1,11 @@
 import { StartResult, ContinueResult } from "./IBlockSyntaxParser";
 import { BlockParser } from "../BlockParser";
-import { SyntaxKind } from "../nodes/SyntaxKind";
+import { SyntaxKind } from "../../nodes/SyntaxKind";
 import { Token } from "../Token";
 import { MarkdownThematicBreakScanner } from "../scanners/MarkdownThematicBreakScanner";
 import { Scanner } from "../Scanner";
-import { Node } from "../nodes/Node";
-import { MarkdownThematicBreak } from "../nodes/MarkdownThematicBreak";
+import { Node } from "../../nodes/Node";
+import { MarkdownThematicBreak } from "../../nodes/MarkdownThematicBreak";
 
 export namespace MarkdownThematicBreakParser {
     export const kind: SyntaxKind.MarkdownThematicBreak = SyntaxKind.MarkdownThematicBreak;

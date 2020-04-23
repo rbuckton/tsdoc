@@ -3,7 +3,7 @@ import { DocTagName } from "./DocTagName";
 import { Block, IBlockParameters } from "./Block";
 import { Node } from "./Node";
 import { Syntax } from "./Syntax";
-import { TSDocPrinter } from "../TSDocPrinter";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 export interface IDocBlockTagParameters extends IBlockParameters {
     tagName?: DocTagName;

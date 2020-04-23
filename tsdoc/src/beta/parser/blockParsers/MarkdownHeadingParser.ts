@@ -1,13 +1,13 @@
 import { StartResult, ContinueResult } from "./IBlockSyntaxParser";
 import { BlockParser } from "../BlockParser";
-import { SyntaxKind } from "../nodes/SyntaxKind";
+import { SyntaxKind } from "../../nodes/SyntaxKind";
 import { Token } from "../Token";
 import { MarkdownHeadingScanner } from "../scanners/MarkdownHeadingScanner";
 import { ContentWriter } from "../ContentWriter";
 import { Scanner } from "../Scanner";
-import { MarkdownHeading } from "../nodes/MarkdownHeading";
-import { MarkdownParagraph } from "../nodes/MarkdownParagraph";
-import { Block } from "../nodes/Block";
+import { MarkdownHeading } from "../../nodes/MarkdownHeading";
+import { MarkdownParagraph } from "../../nodes/MarkdownParagraph";
+import { Block } from "../../nodes/Block";
 
 export namespace MarkdownHeadingParser {
     export const kind: SyntaxKind.MarkdownHeading = SyntaxKind.MarkdownHeading;
@@ -50,11 +50,11 @@ export namespace MarkdownHeadingParser {
                         const newContent: ContentWriter | undefined = parser.getParserState(container).content;
                         if (newContent && newContent.length > 0) {
                             const heading: MarkdownHeading = new MarkdownHeading({
+                                pos: container.pos,
+                                end: container.end,
                                 headingToken: token,
                                 level: token === Token.EqualsSetextHeadingToken ? 1 : 2,
                             });
-                            parser.setNodePos(heading, container.pos);
-                            parser.setNodeEnd(heading, container.end);
                             parser.getParserState(heading).content = newContent;
                             container.insertSiblingAfter(heading);
                             container.removeNode();

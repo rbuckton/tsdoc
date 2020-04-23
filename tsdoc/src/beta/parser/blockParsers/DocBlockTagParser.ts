@@ -1,12 +1,12 @@
 import { StartResult, ContinueResult } from "./IBlockSyntaxParser";
 import { Token } from "../Token";
-import { SyntaxKind } from "../nodes/SyntaxKind";
+import { SyntaxKind } from "../../nodes/SyntaxKind";
 import { BlockParser } from "../BlockParser";
 import { Scanner } from "../Scanner";
 import { TsDocBlockTagScanner } from "../scanners/TsDocBlockTagScanner";
-import { Node } from "../nodes/Node";
-import { DocBlockTag } from "../nodes/DocBlockTag";
-import { DocTagName } from "../nodes/DocTagName";
+import { Node } from "../../nodes/Node";
+import { DocBlockTag } from "../../nodes/DocBlockTag";
+import { DocTagName } from "../../nodes/DocTagName";
 
 export namespace DocBlockTagParser {
     export const kind: SyntaxKind.DocBlockTag = SyntaxKind.DocBlockTag;
@@ -16,9 +16,9 @@ export namespace DocBlockTagParser {
         if (parser.indent <= 3 && scanner.rescan(TsDocBlockTagScanner.rescanTsDocTagName) === Token.DocTagName) {
             const result: StartResult | undefined = scanner.speculate(/*lookAhead*/ false, () => {
                 const pos: number = scanner.startPos;
+                const end: number = scanner.pos;
                 const tagNameText: string = scanner.getTokenText();
-                const tagName = new DocTagName({ text: tagNameText });
-                parser.setNodePos(tagName, pos, scanner.pos);
+                const tagName = new DocTagName({ pos, end, text: tagNameText });
                 scanner.scan();
 
                 if (!Token.isWhitespaceCharacter(scanner.token()) &&

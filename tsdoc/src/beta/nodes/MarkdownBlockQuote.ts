@@ -1,6 +1,6 @@
 import { SyntaxKind } from "./SyntaxKind";
 import { Block, IBlockParameters } from "./Block";
-import { TSDocPrinter } from "../TSDocPrinter";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 export interface IMarkdownBlockQuoteParameters extends IBlockParameters {
 }
@@ -22,9 +22,7 @@ export class MarkdownBlockQuote extends Block {
 
     /** @override */
     protected print(printer: TSDocPrinter): void {
-        printer.pushBlock({
-            linePrefix: '>'
-        });
+        printer.pushBlock({ linePrefix: '> ' });
         this.printChildren(printer);
         printer.popBlock();
     }

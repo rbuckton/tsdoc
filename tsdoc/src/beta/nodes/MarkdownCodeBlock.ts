@@ -1,9 +1,9 @@
 import { SyntaxKind } from "./SyntaxKind";
 import { Block, IBlockParameters } from "./Block";
-import { Token } from "../Token";
-import { IParserState } from "../ParserBase";
-import { TSDocPrinter } from "../TSDocPrinter";
-import { StringUtils } from "../utils/StringUtils";
+import { Token } from "../parser/Token";
+import { IParserState } from "../parser/ParserBase";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
+import { StringUtils } from "../parser/utils/StringUtils";
 
 export interface ICodeFence {
     readonly token: Token.CodeFence;

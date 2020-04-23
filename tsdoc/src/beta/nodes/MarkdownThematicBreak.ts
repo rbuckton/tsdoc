@@ -1,8 +1,8 @@
 import { INodeParameters } from "./Node";
-import { Token } from "../Token";
+import { Token } from "../parser/Token";
 import { Block } from "./Block";
 import { SyntaxKind } from "./SyntaxKind";
-import { TSDocPrinter } from "../TSDocPrinter";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 export interface IMarkdownThematicBreakParameters extends INodeParameters {
     breakToken: Token.ThematicBreak;

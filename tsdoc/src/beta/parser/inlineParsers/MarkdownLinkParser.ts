@@ -1,18 +1,18 @@
 import { InlineParser, IBracketFrame } from "../InlineParser";
 import { Scanner } from "../Scanner";
 import { Token } from "../Token";
-import { Run } from "../nodes/Run";
+import { Run } from "../../nodes/Run";
 import { MarkdownLinkScanner } from "../scanners/MarkdownLinkScanner";
 import { MarkdownLinkLabelParser } from "./MarkdownLinkLabelParser";
-import { MarkdownLinkLabel } from "../nodes/MarkdownLinkLabel";
+import { MarkdownLinkLabel } from "../../nodes/MarkdownLinkLabel";
 import { MarkdownUtils } from "../utils/MarkdownUtils";
-import { MarkdownLinkTitle } from "../nodes/MarkdownLinkTitle";
-import { MarkdownLinkDestination } from "../nodes/MarkdownLinkDestination";
-import { MarkdownLink } from "../nodes/MarkdownLink";
-import { MarkdownImage } from "../nodes/MarkdownImage";
+import { MarkdownLinkTitle } from "../../nodes/MarkdownLinkTitle";
+import { MarkdownLinkDestination } from "../../nodes/MarkdownLinkDestination";
+import { MarkdownLink } from "../../nodes/MarkdownLink";
+import { MarkdownImage } from "../../nodes/MarkdownImage";
 import { MarkdownLinkDestinationParser } from "./MarkdownLinkDestinationParser";
 import { MarkdownLinkTitleParser } from "./MarkdownLinkTitleParser";
-import { Inline } from "../nodes/Inline";
+import { Inline } from "../../nodes/Inline";
 
 export namespace MarkdownLinkParser {
     function tryParseLinkOrImageStart(parser: InlineParser): Run | undefined {
@@ -31,8 +31,8 @@ export namespace MarkdownLinkParser {
         scanner.scan();
 
         // push the bracket and return it.
-        const node: Run = new Run();
-        parser.setParserState(node, { pos, end, text });
+        const node: Run = new Run({ pos, end });
+        parser.setParserState(node, { text });
         parser.pushBracket(node, token);
         return node;
     }
@@ -181,19 +181,13 @@ export namespace MarkdownLinkParser {
         }
 
         // Create either a link or an image based on the opening bracket.
-        let node: MarkdownLink | MarkdownImage;
-        switch (opener.token) {
-            case Token.ExclamationOpenBracketToken:
-                node = new MarkdownImage({ destination, title, label });
-                break;
-            default:
-                node = new MarkdownLink({ destination, title, label });
-                break;
-        }
-
         const pos: number = opener.node.pos;
         const end: number = scanner.startPos;
-        parser.setParserState(node, { pos, end, refLabel });
+        const node: MarkdownImage | MarkdownLink = opener.token === Token.ExclamationOpenBracketToken ?
+            new MarkdownImage({ pos, end, destination, title, label }) :
+            new MarkdownLink({ pos, end, destination, title, label });
+
+        parser.setParserState(node, { refLabel });
 
         // move everything between the open and closer into the inline
         let current: Inline | undefined = opener.node.nextSiblingInline;

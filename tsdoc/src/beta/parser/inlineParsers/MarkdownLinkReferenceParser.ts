@@ -4,10 +4,10 @@ import { MarkdownLinkLabelParser } from "./MarkdownLinkLabelParser";
 import { MarkdownLinkDestinationParser } from "./MarkdownLinkDestinationParser";
 import { MarkdownLinkTitleParser } from "./MarkdownLinkTitleParser";
 import { MarkdownUtils } from "../utils/MarkdownUtils";
-import { MarkdownLinkTitle } from "../nodes/MarkdownLinkTitle";
-import { MarkdownLinkReference } from "../nodes/MarkdownLinkReference";
-import { MarkdownLinkLabel } from "../nodes/MarkdownLinkLabel";
-import { MarkdownLinkDestination } from "../nodes/MarkdownLinkDestination";
+import { MarkdownLinkTitle } from "../../nodes/MarkdownLinkTitle";
+import { MarkdownLinkReference } from "../../nodes/MarkdownLinkReference";
+import { MarkdownLinkLabel } from "../../nodes/MarkdownLinkLabel";
+import { MarkdownLinkDestination } from "../../nodes/MarkdownLinkDestination";
 import { Scanner } from "../Scanner";
 
 export namespace MarkdownLinkReferenceParser {
@@ -75,13 +75,16 @@ export namespace MarkdownLinkReferenceParser {
             return undefined;
         }
 
+        const pos: number = label.pos;
+        const end: number = scanner.startPos;
         const node: MarkdownLinkReference = new MarkdownLinkReference({
+            pos,
+            end,
             label,
             destination,
             title
         });
 
-        parser.setNodePos(node, label.pos, scanner.startPos);
         scanner.scan();
         return node;
     }

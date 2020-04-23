@@ -1,13 +1,13 @@
 import { StartResult, ContinueResult } from "./IBlockSyntaxParser";
 import { BlockParser } from "../BlockParser";
-import { SyntaxKind } from "../nodes/SyntaxKind";
+import { SyntaxKind } from "../../nodes/SyntaxKind";
 import { Token } from "../Token";
 import { IScannerState, Scanner } from "../Scanner";
 import { HtmlUtils } from "../utils/HtmlUtils";
 import { MarkdownHtmlScanner } from "../scanners/MarkdownHtmlScanner";
 import { ContentWriter } from "../ContentWriter";
-import { MarkdownHtmlBlock } from "../nodes/MarkdownHtmlBlock";
-import { Node } from "../nodes/Node";
+import { MarkdownHtmlBlock } from "../../nodes/MarkdownHtmlBlock";
+import { Node } from "../../nodes/Node";
 
 export enum MarkdownHtmlBlockType {
     ScriptOrPreOrStyle,

@@ -1,10 +1,10 @@
 import { StartResult, ContinueResult } from "./IBlockSyntaxParser";
 import { BlockParser } from "../BlockParser";
-import { SyntaxKind } from "../nodes/SyntaxKind";
+import { SyntaxKind } from "../../nodes/SyntaxKind";
 import { Token } from "../Token";
 import { ContentWriter } from "../ContentWriter";
-import { Node } from "../nodes/Node";
-import { MarkdownParagraph } from "../nodes/MarkdownParagraph";
+import { Node } from "../../nodes/Node";
+import { MarkdownParagraph } from "../../nodes/MarkdownParagraph";
 import { Scanner } from "../Scanner";
 
 export namespace MarkdownParagraphParser {

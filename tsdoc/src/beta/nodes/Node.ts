@@ -1,5 +1,5 @@
 import { SyntaxKind } from "./SyntaxKind";
-import { IParserState, ParserBase } from "../ParserBase";
+import { IParserState, ParserBase } from "../parser/ParserBase";
 
 // type-only imports
 type Document = import("./Document").Document;
@@ -14,6 +14,9 @@ type LinkBase = import("./LinkBase").LinkBase;
 declare const assignabilityHack: unique symbol;
 
 export interface INodeParameters {
+    pos?: number;
+    end?: number;
+
     // ensures INodeParameters is not treated as an empty object.
     [assignabilityHack]?: never;
 }
@@ -31,26 +34,34 @@ export abstract class Node {
     public abstract readonly kind: SyntaxKind;
 
     private _version: number = 0;
+    private _pos: number;
+    private _end: number;
     private _parent: Node | undefined;
     private _ownerDocument: Document | undefined;
 
     public constructor(parameters?: INodeParameters) {
+        this._pos = parameters && parameters.pos !== undefined ? parameters.pos : -1;
+        this._end = parameters && parameters.end !== undefined ? parameters.end : -1;
     }
 
     /**
-     * Gets the offset into the original source text at which this node starts.
+     * Gets or sets the offset into the original source text at which this node starts.
      */
     public get pos(): number {
-        const state: IParserState | undefined = this.getParserState();
-        return state ? state.pos : -1;
+        return this._pos;
+    }
+    public set pos(value: number) {
+        this._pos = value;
     }
 
     /**
-     * Gets the offset into the original source text at which this node ends.
+     * Gets or sets the offset into the original source text at which this node ends.
      */
     public get end(): number {
-        const state: IParserState | undefined = this.getParserState();
-        return state ? state.end : -1;
+        return this._end;
+    }
+    public set end(value: number) {
+        this._end = value;
     }
 
     /**

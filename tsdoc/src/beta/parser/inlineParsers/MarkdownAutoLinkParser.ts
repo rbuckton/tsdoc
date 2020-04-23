@@ -2,7 +2,7 @@ import { InlineParser } from "../InlineParser";
 import { Scanner } from "../Scanner";
 import { Token } from "../Token";
 import { MarkdownAutoLinkScanner } from "../scanners/MarkdownAutoLinkScanner";
-import { MarkdownAutoLink } from "../nodes/MarkdownAutoLink";
+import { MarkdownAutoLink } from "../../nodes/MarkdownAutoLink";
 
 export namespace MarkdownAutoLinkParser {
     export function tryParse(parser: InlineParser): MarkdownAutoLink | undefined {
@@ -21,7 +21,8 @@ export namespace MarkdownAutoLinkParser {
                 scanner.scan();
                 if (scanner.token() === Token.GreaterThanToken) {
                     scanner.scan();
-                    return parser.setNodePos(new MarkdownAutoLink({ destination: href, linkToken }), pos, scanner.startPos);
+                    const end: number = scanner.startPos;
+                    return new MarkdownAutoLink({ pos, end, destination: href, linkToken });
                 }
             }
         }

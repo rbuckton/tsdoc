@@ -1,7 +1,7 @@
-import { Token } from "../Token";
+import { Token } from "../parser/Token";
 import { SyntaxKind } from "./SyntaxKind";
 import { ListBase, IListBaseParameters } from "./ListBase";
-import { TSDocPrinter } from "../TSDocPrinter";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 export interface IOrderedListMarker {
     readonly markerOffset: number;

@@ -1,8 +1,8 @@
 import { StartResult, ContinueResult } from "./IBlockSyntaxParser";
 import { BlockParser } from "../BlockParser";
-import { SyntaxKind } from "../nodes/SyntaxKind";
-import { Node } from "../nodes/Node";
-import { Document } from "../nodes/Document";
+import { SyntaxKind } from "../../nodes/SyntaxKind";
+import { Node } from "../../nodes/Node";
+import { Document } from "../../nodes/Document";
 
 export namespace DocumentParser {
     export const kind: SyntaxKind.Document = SyntaxKind.Document;

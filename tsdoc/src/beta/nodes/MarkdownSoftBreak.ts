@@ -1,6 +1,6 @@
 import { Inline, IInlineParameters } from "./Inline";
 import { SyntaxKind } from "./SyntaxKind";
-import { TSDocPrinter } from "../TSDocPrinter";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 export interface IMarkdownSoftBreakParameters extends IInlineParameters {
 }
