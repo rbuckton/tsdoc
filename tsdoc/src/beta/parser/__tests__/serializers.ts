@@ -1,6 +1,5 @@
 import { SyntaxKind } from "../../nodes/SyntaxKind";
 import { Token } from "../Token";
-import { ContentWriter } from "../ContentWriter";
 import { Node } from "../../nodes/Node";
 import { MarkdownCodeBlock } from "../../nodes/MarkdownCodeBlock";
 import { MarkdownHeading } from "../../nodes/MarkdownHeading";
@@ -227,14 +226,11 @@ function nodeToSnapshotCore(node: Node): object {
     const parserState: IParserState | undefined = node[ParserBase.parserState];
     const closed: boolean | undefined = parserState && parserState.closed;
     const lastLineIsBlank: boolean | undefined = parserState && parserState.lastLineIsBlank;
-    const contentWriter: ContentWriter | undefined = parserState && parserState.content;
-    const content: string | undefined = contentWriter && contentWriter.toString();
 
     return {
         kind: SnapshotSerializer.enumValue(node.kind, SyntaxKind, Placement.AtStart, -Infinity),
         children: SnapshotSerializer.ignoreIfUndefined(children),
         closed: SnapshotSerializer.ignoreIfUndefined(closed, Placement.Default, -10),
-        content: SnapshotSerializer.ignoreIfUndefined(content, Placement.Default, -10),
         lastLineIsBlank: SnapshotSerializer.ignoreIfUndefined(lastLineIsBlank),
         pos: node.pos < 0 ?
             SnapshotSerializer.ignore(node.pos) :

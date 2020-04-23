@@ -2,13 +2,11 @@ import { Node } from "../nodes/Node";
 import { Scanner } from "./Scanner";
 import { LineMap } from "./LineMap";
 import { IMapping } from "./Preprocessor";
-import { ContentWriter } from "./ContentWriter";
 
 export interface IParserState {
     closed?: boolean;
     lastLineIsBlank?: boolean; 
     lastLineChecked?: boolean;
-    content?: ContentWriter;
     refLabel?: string;
 } 
 

@@ -1,5 +1,6 @@
 import { BlockParser } from "../BlockParser";
 import { Block } from "../../nodes/Block";
+import { ContentWriter } from "../ContentWriter";
 
 export const enum StartResult {
     Unmatched = 0,  // Block was not started
@@ -19,4 +20,5 @@ export interface IBlockSyntaxParser<T extends Block> {
     tryContinue(parser: BlockParser, block: T): ContinueResult;
     finish(parser: BlockParser, block: T): void;
     acceptLine?(parser: BlockParser, block: T): void;
+    getContent?(parser: BlockParser, block: T): ContentWriter | undefined;
 }

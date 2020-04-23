@@ -13,7 +13,7 @@ export class ContentWriter {
     private _sourceSegments: IMapping[] = [this._lastSegment];
     private _text: string ;
 
-    public constructor(text: string = "") {
+    public constructor(text: string = '') {
         this._text = text;
     }
 
@@ -56,5 +56,14 @@ export class ContentWriter {
      */
     public toString(): string {
         return this._text;
+    }
+
+    /**
+     * Clears the content writer.
+     */
+    public clear(): void {
+        this._lastSegment = { pos: 0, sourcePos: 0 };
+        this._sourceSegments = [this._lastSegment];
+        this._text = '';
     }
 }

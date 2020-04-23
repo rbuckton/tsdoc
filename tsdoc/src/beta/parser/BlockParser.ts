@@ -1,4 +1,4 @@
-import { Scanner, IScannerState } from "./Scanner";
+import { IScannerState } from "./Scanner";
 import { Token } from "./Token";
 import { SyntaxKind } from "../nodes/SyntaxKind";
 import { StartResult, ContinueResult, IBlockSyntaxParser } from "./blockParsers/IBlockSyntaxParser";
@@ -52,6 +52,14 @@ export class BlockParser extends ParserBase {
         for (const blockSyntaxParser of this._blockSyntaxParsers) {
             this._blockSyntaxParserMap.set(blockSyntaxParser.kind, blockSyntaxParser);
         }
+    }
+
+    /**
+     * Gets the root document for the parser.
+     */
+    public get document(): Document {
+        if (!this._root) throw new Error('Parser has not yet started parsing.');
+        return this._root;
     }
 
     /**
@@ -319,36 +327,7 @@ export class BlockParser extends ParserBase {
     }
 
     public parseReferences(block: MarkdownParagraph): void {
-        const content: ContentWriter | undefined = this.getParserState(block).content;
-        if (content) {
-            const parser: InlineParser = new InlineParser(this._root, content.toString(), content.mappings);
-            for (const linkReference of parser.parseReferences()) {
-                block.insertSiblingBefore(linkReference);
-            }
-
-            const scanner: Scanner = parser.scanner;
-            if (scanner.token() === Token.EndOfFileToken) {
-                this.getParserState(block).content = undefined;
-                return;
-            }
-
-            if (scanner.startPos === 0) {
-                return;
-            }
-            
-            let sourcePos: number = scanner.startPos;
-            const newContent: ContentWriter = new ContentWriter();
-            newContent.addMapping(scanner.startPos);
-            for (const sourceSegment of content.mappings) {
-                if (sourceSegment.sourcePos > sourcePos) {
-                    newContent.write(scanner.slice(sourcePos, sourceSegment.sourcePos));
-                    newContent.addMapping(sourceSegment.sourcePos);
-                    sourcePos = sourceSegment.sourcePos;
-                }
-            }
-            newContent.write(scanner.slice(sourcePos));
-            this.getParserState(block).content = newContent;
-        }
+        MarkdownParagraphParser.parseReferences(this, block);
     }
 
     private _acceptsLines(block: Node): boolean {
@@ -379,13 +358,13 @@ export class BlockParser extends ParserBase {
     }
 
     private _processInlines(block: Block): void {
-        if (block.isInlineContainer()) {
-            const content: ContentWriter | undefined = this.getParserState(block).content;
+        const blockSyntaxParser: IBlockSyntaxParser<Block> | undefined = this._blockSyntaxParserMap.get(block.kind);
+        if (blockSyntaxParser && blockSyntaxParser.getContent) {
+            const content: ContentWriter | undefined = blockSyntaxParser.getContent(this, block);
             if (content && content.length) {
                 const parser = new InlineParser(this._root, content.toString(), content.mappings);
                 parser.parse(block);
             }
-            this.getParserState(block).content = undefined;
         } else {
             block.forEachChild(child => {
                 if (child.isBlock()) {
