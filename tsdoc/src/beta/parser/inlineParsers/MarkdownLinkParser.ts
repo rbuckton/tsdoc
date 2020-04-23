@@ -31,8 +31,7 @@ export namespace MarkdownLinkParser {
         scanner.scan();
 
         // push the bracket and return it.
-        const node: Run = new Run({ pos, end });
-        parser.setParserState(node, { text });
+        const node: Run = new Run({ pos, end, text });
         parser.pushBracket(node, token);
         return node;
     }

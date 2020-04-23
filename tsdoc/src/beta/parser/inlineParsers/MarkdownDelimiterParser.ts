@@ -36,9 +36,8 @@ export namespace MarkdownDelimiterParser {
         const text: string = scanner.getTokenText();
         const delimiterCount: number = scanner.tokenLength;
         scanner.scan();
-        
-        const node: Run = new Run({ pos, end });
-        parser.getParserState(node).text = text;
+
+        const node: Run = new Run({ pos, end, text });
         if (canOpen || canClose) {
             parser.pushDelimiter(node, token, delimiterCount, canOpen, canClose);
         }
@@ -63,11 +62,11 @@ export namespace MarkdownDelimiterParser {
 
         // remove used delimiters from stack elts and inlines
         opener.remaining -= delimiterCount;
-        parser.getParserState(openerRun).text = openerRun.text.slice(0, -delimiterCount);
+        openerRun.text = openerRun.text.slice(0, -delimiterCount);
         openerRun.end -= delimiterCount;
-        
+
         closer.remaining -= delimiterCount;
-        parser.getParserState(closerRun).text = closerRun.text.slice(0, -delimiterCount);
+        closerRun.text = closerRun.text.slice(0, -delimiterCount);
         closerRun.pos += delimiterCount;
 
         // build contents for new emph element

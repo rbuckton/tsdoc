@@ -1,7 +1,6 @@
 import { Inline } from "./Inline";
 import { SyntaxKind } from "./SyntaxKind";
 import { INodeParameters } from "./Node";
-import { IParserState } from "../parser/ParserBase";
 import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 export interface IRunParameters extends INodeParameters {
@@ -9,11 +8,11 @@ export interface IRunParameters extends INodeParameters {
 }
 
 export class Run extends Inline {
-    private _text: string | undefined;
+    private _text: string;
 
     public constructor(parameters?: IRunParameters) {
         super(parameters);
-        this._text = parameters && parameters.text;
+        this._text = parameters && parameters.text !== undefined ? parameters.text : "";
     }
 
     /** @override */
@@ -22,21 +21,10 @@ export class Run extends Inline {
     }
 
     public get text(): string {
-        const state = this.getParserState();
-        return (state ? state.text : this._text) || "";
+        return this._text;
     }
-
     public set text(value: string) {
-        if (this.text !== value) {
-            this.beforeChange();
-            this._text = value;
-            this.afterChange();
-        }
-    }
-
-    /** @override */
-    protected applyParserState(state: IParserState): void {
-        this._text = state.text;
+        this._text = value;
     }
 
     /** @override */

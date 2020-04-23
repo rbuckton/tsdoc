@@ -12,7 +12,6 @@ export interface IParserState {
     content?: ContentWriter;
     info?: string;
     literal?: string;
-    text?: string;
     htmlBlockType?: MarkdownHtmlBlockType;
     refLabel?: string;
 } 

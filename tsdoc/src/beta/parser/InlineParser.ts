@@ -79,11 +79,14 @@ export class InlineParser extends ParserBase {
                 block.appendChild(inline);
             } else {
                 if (lastRun) {
-                    this.getParserState(lastRun).text! += this.scanner.getTokenText();
+                    lastRun.text += this.scanner.getTokenText();
                     lastRun.end = this.scanner.pos;
                 } else {
-                    lastRun = new Run({ pos: this.scanner.startPos, end: this.scanner.pos });
-                    this.getParserState(lastRun).text = this.scanner.getTokenText();
+                    lastRun = new Run({
+                        pos: this.scanner.startPos,
+                        end: this.scanner.pos,
+                        text: this.scanner.getTokenText()
+                    });
                     block.appendChild(lastRun);
                 }
                 this.scanner.scan();
@@ -250,7 +253,7 @@ export class InlineParser extends ParserBase {
                 let next: Content | undefined = child.nextSibling;
                 if (child instanceof Run) {
                     if (lastRun) {
-                        this.getParserState(lastRun).text! += child.text;
+                        lastRun.text += child.text;
                         lastRun.end = child.end;
                         child.removeNode();
                     } else {
@@ -265,8 +268,8 @@ export class InlineParser extends ParserBase {
         } else if (container instanceof MarkdownHardBreak || container instanceof MarkdownSoftBreak) {
             const prev: Content | undefined = container.previousSibling;
             if (prev instanceof Run) {
-                this.getParserState(prev).text = this.getParserState(prev).text!.replace(/\s+$/, '');
-                if (!this.getParserState(prev).text) {
+                prev.text = prev.text.replace(/\s+$/, '');
+                if (!prev.text) {
                     prev.removeNode();
                 }
             }
