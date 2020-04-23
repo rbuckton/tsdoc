@@ -1,7 +1,6 @@
 import { SyntaxKind } from "./SyntaxKind";
 import { INodeParameters } from "./Node";
 import { Block } from "./Block";
-import { IParserState } from "../parser/ParserBase";
 import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 export interface IMarkdownHtmlBlockParameters extends INodeParameters {
@@ -9,11 +8,11 @@ export interface IMarkdownHtmlBlockParameters extends INodeParameters {
 }
 
 export class MarkdownHtmlBlock extends Block {
-    private _html: string | undefined;
+    private _literal: string | undefined;
 
     public constructor(parameters?: IMarkdownHtmlBlockParameters) {
         super(parameters);
-        this._html = parameters && parameters.html;
+        this._literal = parameters && parameters.html;
     }
 
     /** @override */
@@ -21,27 +20,17 @@ export class MarkdownHtmlBlock extends Block {
         return SyntaxKind.MarkdownHtmlBlock;
     }
 
-    public get html(): string {
-        const state: IParserState | undefined = this.getParserState();
-        return (state ? state.literal : this._html) || "";
+    public get literal(): string {
+        return this._literal || '';
     }
 
-    public set html(value: string) {
-        if (this.html !== value) {
-            this.beforeChange();
-            this._html = value;
-            this.afterChange();
-        }
-    }
-
-    /** @override */
-    protected applyParserState(state: IParserState): void {
-        this._html = state.literal;
+    public set literal(value: string) {
+        this._literal = value;
     }
 
     /** @override */
     protected print(printer: TSDocPrinter): void {
-        printer.write(this.html);
+        printer.write(this.literal);
         printer.writeln();
     }
 }

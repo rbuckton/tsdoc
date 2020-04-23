@@ -1,7 +1,6 @@
 import { SyntaxKind } from "./SyntaxKind";
 import { Block, IBlockParameters } from "./Block";
 import { Token } from "../parser/Token";
-import { IParserState } from "../parser/ParserBase";
 import { TSDocPrinter } from "../parser/TSDocPrinter";
 import { StringUtils } from "../parser/utils/StringUtils";
 
@@ -17,12 +16,45 @@ export interface IMarkdownCodeBlockParameters extends IBlockParameters {
     literal?: string;
 }
 
-function equateCodeFences(x: ICodeFence | undefined, y: ICodeFence | undefined): boolean {
-    if (x === y) return true;
-    if (!x || !y) return false;
-    return x.token === y.token
-        && x.length === y.length
-        && x.fenceOffset === y.fenceOffset;
+function validateCodeFence(codeFence: ICodeFence | undefined, paramName: string): string | undefined {
+    if (codeFence) {
+        if (!Token.isCodeFence(codeFence.token)) {
+            return `Argument out of range: ${paramName}.token.`;
+        }
+        if (codeFence.fenceOffset < 0 || codeFence.fenceOffset >= 4) {
+            return `Argument out of range: ${paramName}.fenceOffset.`;
+        }
+        if (codeFence.length < 3) {
+            return `Argument out of range: ${paramName}.length.`;
+        }
+    }
+    return undefined;
+}
+
+function validateInfo(info: string | undefined, codeFence: ICodeFence | undefined, forCodeFence: boolean): string | undefined {
+    if (info &&
+        codeFence &&
+        codeFence.token === Token.BacktickCodeFenceToken &&
+        info.indexOf('`') >= 0) {
+        return forCodeFence ?
+            'Cannot specify a backtick (\'`\') code fence if the info string contains a backtick.' :
+            'The info string of a code block with a backtick (\'`\') code fence cannot include a backtick.';
+    }
+    return undefined;
+}
+
+function validateLiteral(literal: string | undefined, codeFence: ICodeFence | undefined, forCodeFence: boolean): string | undefined {
+    if (literal && codeFence) {
+        const codeFenceToken: string = StringUtils.repeat(codeFence.token === Token.BacktickCodeFenceToken ? '`' : '~', codeFence.length);
+        const codeFenceRegExp: RegExp = new RegExp(`^\\s{0,3}${codeFenceToken}\\s*$`, 'm');
+        if (codeFenceRegExp.test(literal)) {
+            const codeFenceKind: string = codeFence.token === Token.BacktickCodeFenceToken ? 'backtick (\'`\')' : 'tilde (\'~\')';
+            return forCodeFence ?
+                `Cannot specify a ${codeFenceKind} code fence if the literal of the code block includes a line containing only '${codeFenceToken}' indented less than 4 spaces.` :
+                `The literal string of a code block with a ${codeFenceKind} code fence may not include a line containing only '${codeFenceToken}' indented less than 4 spaces.`;
+        }
+    }
+    return undefined;
 }
 
 export class MarkdownCodeBlock extends Block {
@@ -30,11 +62,17 @@ export class MarkdownCodeBlock extends Block {
     private _info: string | undefined;
     private _literal: string | undefined;
 
-    public constructor(parameters?: IMarkdownCodeBlockParameters) {
+    public constructor(parameters: IMarkdownCodeBlockParameters = {}) {
         super(parameters);
-        this._codeFence = parameters && parameters.codeFence;
-        this._info = parameters && parameters.info;
-        this._literal = parameters && parameters.literal;
+        const { codeFence, info, literal } = parameters;
+        const message: string | undefined =
+            validateCodeFence(codeFence, 'parameters.codeFence') ||
+            validateInfo(info, codeFence, /*forCodeFence*/ false) ||
+            validateLiteral(literal, codeFence, /*forCodeFence*/ false);
+        if (message) throw new Error(message);
+        this._codeFence = codeFence;
+        this._info = info;
+        this._literal = literal;
     }
 
     public get kind(): SyntaxKind.MarkdownCodeBlock {
@@ -46,48 +84,32 @@ export class MarkdownCodeBlock extends Block {
     }
 
     public set codeFence(value: ICodeFence | undefined) {
-        if (value) {
-            if (!Token.isCodeFence(value.token)) throw new RangeError("Argument out of range: value.token");
-            if (value.fenceOffset < 0) throw new RangeError("Argument out of range: value.fenceOffset");
-            if (value.length < 3) throw new RangeError("Argument out of range: value.length");
-        }
-        if (!equateCodeFences(this.codeFence, value)) {
-            this.beforeChange();
-            this._codeFence = value;
-            this.afterChange();
-        }
+        const message: string | undefined =
+            validateCodeFence(value, 'value') ||
+            validateInfo(this._info, value, /*forCodeFence*/ true) ||
+            validateLiteral(this._literal, value, /*forCodeFence*/ true);
+        if (message) throw new Error(message);
+        this._codeFence = value;
     }
 
     public get info(): string {
-        const state: IParserState | undefined = this.getParserState();
-        return (state ? state.info : this._info) || "";
+        return this._info || '';
     }
 
     public set info(value: string) {
-        if (this.info !== value) {
-            this.beforeChange();
-            this._info = value;
-            this.afterChange();
-        }
+        const message: string | undefined = validateInfo(value, this._codeFence, /*forCodeFence*/ false);
+        if (message) throw new Error(message);
+        this._info = value;
     }
 
     public get literal(): string {
-        const state: IParserState | undefined = this.getParserState();
-        return (state ? state.literal : this._literal) || "";
+        return this._literal || '';
     }
 
     public set literal(value: string) {
-        if (this.literal !== value) {
-            this.beforeChange();
-            this._literal = value;
-            this.afterChange();
-        }
-    }
-
-    /** @override */
-    protected applyParserState(state: IParserState): void {
-        this._info = state.info;
-        this._literal = state.literal;
+        const message: string | undefined = validateLiteral(value, this._codeFence, /*forCodeFence*/ false);
+        if (message) throw new Error(message);
+        this._literal = value;
     }
 
     /** @override */

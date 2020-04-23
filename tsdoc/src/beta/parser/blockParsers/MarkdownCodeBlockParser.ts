@@ -12,6 +12,19 @@ import { ContentWriter } from "../ContentWriter";
 export namespace MarkdownCodeBlockParser {
     export const kind: SyntaxKind.MarkdownCodeBlock = SyntaxKind.MarkdownCodeBlock;
 
+    interface ICodeBlockState {
+        hasWrittenInfo?: boolean;
+        content?: ContentWriter;
+    }
+
+    function createCodeBlockState(): ICodeBlockState {
+        return {};
+    }
+
+    function getState(parser: BlockParser, node: MarkdownCodeBlock): ICodeBlockState {
+        return parser.getState(MarkdownCodeBlockParser, node, createCodeBlockState);
+    }
+
     function rescanCodeFenceStartToken(scanner: Scanner): Token | undefined {
         const token: Token = scanner.rescan(MarkdownCodeBlockScanner.rescanCodeFenceToken);
         // for a backtick code fence, no other backticks may be present on the line
@@ -49,6 +62,7 @@ export namespace MarkdownCodeBlockParser {
             if ((!parser.tip || parser.tip.kind !== SyntaxKind.MarkdownParagraph) && !parser.blank) {
                 parser.retreatToIndentStart();
                 scanner.scanColumns(4);
+
                 const pos: number = scanner.startPos;
                 parser.finishUnmatchedBlocks();
                 parser.pushBlock(new MarkdownCodeBlock(), pos);
@@ -100,32 +114,34 @@ export namespace MarkdownCodeBlockParser {
     }
 
     export function finish(parser: BlockParser, block: MarkdownCodeBlock): void {
-        const content: ContentWriter | undefined = parser.getParserState(block).content;
+        const state: ICodeBlockState = getState(parser, block);
         if (block.codeFence) {
-            parser.getParserState(block).literal = content ? content.toString() : "";
+            block.literal = state.content ? state.content.toString() : '';
         } else {
-            parser.getParserState(block).literal = content ? MarkdownUtils.trimBlankLines(content.toString()) : "";
+            block.literal = state.content ? MarkdownUtils.trimBlankLines(state.content.toString()) : '';
         }
-        parser.getParserState(block).content = undefined;
+        state.content = undefined;
+        state.hasWrittenInfo = undefined;
     }
 
     export function acceptLine(parser: BlockParser, block: MarkdownCodeBlock): void {
         const scanner: Scanner = parser.scanner;
-        if (block.codeFence && parser.getParserState(block).info === undefined) {
+        const state: ICodeBlockState = getState(parser, block);
+        if (block.codeFence && !state.hasWrittenInfo) {
+            state.hasWrittenInfo = true;
             const text: string = scanner.scanLine();
-            parser.getParserState(block).info = MarkdownUtils.unescapeString(text.trim());
+            block.info = MarkdownUtils.unescapeString(text.trim());
             return;
         }
 
-        let content: ContentWriter | undefined = parser.getParserState(block).content;
-        if (!content) {
-            parser.getParserState(block).content = content = new ContentWriter();
+        if (!state.content) {
+            state.content = new ContentWriter();
         }
 
-        content.addMapping(scanner.startPos);
-        content.write(scanner.scanLine());
+        state.content.addMapping(scanner.startPos);
+        state.content.write(scanner.scanLine());
         if (Token.isLineEnding(scanner.token())) {
-            content.write("\n");
+            state.content.write("\n");
         }
     }
 }

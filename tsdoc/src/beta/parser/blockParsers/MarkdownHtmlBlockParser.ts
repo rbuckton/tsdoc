@@ -22,9 +22,22 @@ export enum MarkdownHtmlBlockType {
 export namespace MarkdownHtmlBlockParser {
     export const kind: SyntaxKind.MarkdownHtmlBlock = SyntaxKind.MarkdownHtmlBlock;
 
+    interface IHtmlBlockState {
+        content?: ContentWriter;
+        htmlBlockType?: MarkdownHtmlBlockType;
+    }
+
+    function createHtmlBlockState(): IHtmlBlockState {
+        return {};
+    }
+
+    function getState(parser: BlockParser, node: MarkdownHtmlBlock): IHtmlBlockState {
+        return parser.getState(MarkdownHtmlBlockParser, node, createHtmlBlockState);
+    }
+
     function createHtmlBlock(parser: BlockParser, blockType: MarkdownHtmlBlockType): MarkdownHtmlBlock {
         const block: MarkdownHtmlBlock = new MarkdownHtmlBlock();
-        parser.getParserState(block).htmlBlockType = blockType;
+        getState(parser, block).htmlBlockType = blockType;
         return block;
     }
 
@@ -142,19 +155,12 @@ export namespace MarkdownHtmlBlockParser {
     }
 
     export function tryContinue(parser: BlockParser, block: MarkdownHtmlBlock): ContinueResult {
+        const state: IHtmlBlockState = getState(parser, block);
         return parser.blank && (
-            parser.getParserState(block).htmlBlockType === MarkdownHtmlBlockType.BlockTag ||
-            parser.getParserState(block).htmlBlockType === MarkdownHtmlBlockType.StandaloneTag) ?
+            state.htmlBlockType === MarkdownHtmlBlockType.BlockTag ||
+            state.htmlBlockType === MarkdownHtmlBlockType.StandaloneTag) ?
             ContinueResult.Unmatched :
             ContinueResult.Matched;
-    }
-
-    export function finish(parser: BlockParser, block: MarkdownHtmlBlock): void {
-        const content: ContentWriter | undefined = parser.getParserState(block).content;
-        parser.getParserState(block).literal = content ?
-            content.toString().replace(/(\n *)+$/, '') :
-            "";
-        parser.getParserState(block).content = undefined;
     }
 
     const htmlBlockCloseRegExps: RegExp[] = [
@@ -168,25 +174,31 @@ export namespace MarkdownHtmlBlockParser {
     export function acceptLine(parser: BlockParser, block: MarkdownHtmlBlock): void {
         parser.retreatToIndentStart();
 
+        const state: IHtmlBlockState = getState(parser, block);
         const scanner: Scanner = parser.scanner;
-        let content: ContentWriter | undefined = parser.getParserState(block).content;
-        if (!content) {
-            content = parser.getParserState(block).content = new ContentWriter();
+        if (!state.content) {
+            state.content = new ContentWriter();
         }
 
         const line: string = scanner.scanLine();
-        content.addMapping(scanner.startPos);
-        content.write(line);
+        state.content.addMapping(scanner.startPos);
+        state.content.write(line);
         if (scanner.token() === Token.NewLineTrivia) {
-            content.write("\n");
+            state.content.write("\n");
         }
 
-        const blockType: MarkdownHtmlBlockType | undefined = parser.getParserState(block).htmlBlockType;
+        const blockType: MarkdownHtmlBlockType | undefined = state.htmlBlockType;
         if (blockType !== undefined &&
             blockType >= MarkdownHtmlBlockType.ScriptOrPreOrStyle &&
             blockType <= MarkdownHtmlBlockType.CharacterData &&
             htmlBlockCloseRegExps[blockType].test(line)) {
             parser.finish(block, scanner.startPos);
         }
+    }
+
+    export function finish(parser: BlockParser, block: MarkdownHtmlBlock): void {
+        const state: IHtmlBlockState = getState(parser, block);
+        block.literal = state.content ? state.content.toString().replace(/(\n *)+$/, '') : '';
+        state.content = undefined;
     }
 }

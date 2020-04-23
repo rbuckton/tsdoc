@@ -211,7 +211,7 @@ export function render(node: Node): string {
 
     function html_block(node: MarkdownHtmlBlock) {
         cr();
-        lit(node.html);
+        lit(node.literal);
         cr();
     }
 
