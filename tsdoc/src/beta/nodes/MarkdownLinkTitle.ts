@@ -1,5 +1,6 @@
 import { SyntaxKind } from "./SyntaxKind";
 import { Syntax, ISyntaxParameters } from "./Syntax";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 export interface IMarkdownLinkTitleParameters extends ISyntaxParameters {
     text?: string;
@@ -56,6 +57,19 @@ export class MarkdownLinkTitle extends Syntax {
             this._quoteStyle = value;
             this.afterChange();
         }
+    }
+
+    /** @override */
+    protected print(printer: TSDocPrinter): void {
+        printer.write(
+            this.quoteStyle === MarkdownLinkTitleQuoteStyle.DoubleQuote ? '"' :
+            this.quoteStyle === MarkdownLinkTitleQuoteStyle.SingleQuote ? '\'' :
+            '(');
+        printer.write(this.text);
+        printer.write(
+            this.quoteStyle === MarkdownLinkTitleQuoteStyle.DoubleQuote ? '"' :
+            this.quoteStyle === MarkdownLinkTitleQuoteStyle.SingleQuote ? '\'' :
+            ')');
     }
 }
 

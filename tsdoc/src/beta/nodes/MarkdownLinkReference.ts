@@ -1,27 +1,35 @@
 import { SyntaxKind } from "./SyntaxKind";
 import { MarkdownLinkLabel } from "./MarkdownLinkLabel";
 import { MarkdownLinkDestination } from "./MarkdownLinkDestination";
-import { MarkdownLinkTitle, MarkdownLinkTitleQuoteStyle } from "./MarkdownLinkTitle";
+import { MarkdownLinkTitle } from "./MarkdownLinkTitle";
 import { Syntax } from "./Syntax";
 import { Block, IBlockParameters } from "./Block";
 import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 export interface IMarkdownLinkReferenceParameters extends IBlockParameters {
-    label?: MarkdownLinkLabel;
-    destination?: MarkdownLinkDestination;
-    title?: MarkdownLinkTitle | undefined;
+    label?: MarkdownLinkLabel | string;
+    destination?: MarkdownLinkDestination | string;
+    title?: MarkdownLinkTitle | string;
 }
 
 export class MarkdownLinkReference extends Block {
-    private _label: MarkdownLinkLabel | undefined;
-    private _destination: MarkdownLinkDestination | undefined;
-    private _title: MarkdownLinkTitle | undefined;
+    private _labelSyntax: MarkdownLinkLabel;
+    private _destinationSyntax: MarkdownLinkDestination;
+    private _titleSyntax: MarkdownLinkTitle | undefined;
 
-    public constructor(parameters?: IMarkdownLinkReferenceParameters) {
+    public constructor(parameters: IMarkdownLinkReferenceParameters = {}) {
         super(parameters);
-        this.attachSyntax(this._label = parameters && parameters.label);
-        this.attachSyntax(this._destination = parameters && parameters.destination);
-        this.attachSyntax(this._title = parameters && parameters.title);
+        this.attachSyntax(this._labelSyntax = parameters.label instanceof MarkdownLinkLabel ?
+            parameters.label :
+            new MarkdownLinkLabel({ text: parameters.label }));
+        this.attachSyntax(this._destinationSyntax = parameters.destination instanceof MarkdownLinkDestination ?
+                parameters.destination :
+                new MarkdownLinkDestination({ href: parameters.destination }));
+        if (parameters.title) {
+            this.attachSyntax(this._titleSyntax = parameters.title instanceof MarkdownLinkTitle ?
+                parameters.title :
+                new MarkdownLinkTitle({ text: parameters.title }));
+        }
     }
 
     /**
@@ -31,86 +39,68 @@ export class MarkdownLinkReference extends Block {
         return SyntaxKind.MarkdownLinkReference;
     }
 
-    public get labelSyntax(): MarkdownLinkLabel {
-        if (!this._label) {
-            this.attachSyntax(this._label = new MarkdownLinkLabel());
-        }
-        return this._label;
-    }
-
-    public get destinationSyntax(): MarkdownLinkDestination {
-        if (!this._destination) {
-            this.attachSyntax(this._destination = new MarkdownLinkDestination());
-        }
-        return this._destination;
-    }
-
     public get titleSyntax(): MarkdownLinkTitle | undefined {
-        return this._title;
+        return this._titleSyntax;
     }
 
     public get label(): string {
-        return this.labelSyntax.text;
+        return this._labelSyntax.text;
     }
 
     public set label(value: string) {
-        this.labelSyntax.text = value;
+        this._labelSyntax.text = value;
     }
 
-    public get href(): string {
-        return this.destinationSyntax.href;
+    public get destination(): string {
+        return this._destinationSyntax.href;
     }
 
-    public set href(value: string) {
-        this.destinationSyntax.href = value;
+    public set destination(value: string) {
+        this._destinationSyntax.href = value;
     }
 
     public get title(): string | undefined {
-        return this._title && this._title.text;
+        return this._titleSyntax && this._titleSyntax.text;
     }
 
     public set title(value: string | undefined) {
         if (this.title !== value) {
             if (value === undefined) {
-                if (this._title) {
-                    const title: MarkdownLinkTitle = this._title;
-                    this._title = undefined;
-                    this.detachSyntax(title);
+                if (this._titleSyntax) {
+                    const titleSyntax: MarkdownLinkTitle = this._titleSyntax;
+                    this._titleSyntax = undefined;
+                    this.detachSyntax(titleSyntax);
                 }
             } else {
-                if (this._title) {
-                    this._title.text = value;
+                if (this._titleSyntax) {
+                    this._titleSyntax.text = value;
                 } else {
-                    this.attachSyntax(this._title = new MarkdownLinkTitle({ text: value }));
+                    this.attachSyntax(this._titleSyntax = new MarkdownLinkTitle({ text: value }));
                 }
             }
         }
     }
 
     /** @override */
-    protected getSyntax(): ReadonlyArray<Syntax | undefined> {
-        return [
-            this.labelSyntax,
-            this.destinationSyntax,
-            this.titleSyntax
+    public getSyntax(): ReadonlyArray<Syntax> {
+        const syntax: Syntax[] = [
+            this._labelSyntax,
+            this._destinationSyntax
         ];
+        if (this._titleSyntax) {
+            syntax.push(this._titleSyntax);
+        }
+        return syntax;
     }
 
     /** @override */
     protected print(printer: TSDocPrinter): void {
-        printer.write('[');
-        printer.write(this.label);
-        printer.write(']: ');
-        printer.write(this.href);
-        if (this.titleSyntax) {
+        this.printNode(printer, this._labelSyntax);
+        printer.write(': ');
+        this.printNode(printer, this._destinationSyntax);
+        if (this._titleSyntax) {
             printer.write(' ');
-            printer.write(this.titleSyntax.quoteStyle === MarkdownLinkTitleQuoteStyle.DoubleQuote ? '"' :
-                this.titleSyntax.quoteStyle === MarkdownLinkTitleQuoteStyle.SingleQuote ? '\'' :
-                '(');
-            printer.write(this.titleSyntax.text);
-            printer.write(this.titleSyntax.quoteStyle === MarkdownLinkTitleQuoteStyle.DoubleQuote ? '"' :
-                this.titleSyntax.quoteStyle === MarkdownLinkTitleQuoteStyle.SingleQuote ? '\'' :
-                ')');
+            this.printNode(printer, this._titleSyntax);
         }
     }
 }

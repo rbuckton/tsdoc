@@ -17,9 +17,11 @@ import { MarkdownLinkDestination } from "../../nodes/MarkdownLinkDestination";
 import { MarkdownLinkReference } from "../../nodes/MarkdownLinkReference";
 import { MarkdownLink } from "../../nodes/MarkdownLink";
 import { MarkdownImage } from "../../nodes/MarkdownImage";
-import { IParserState, ParserBase } from "../ParserBase";
 import { Content } from "../../nodes/Content";
 import { MarkdownListItem } from "../../nodes/MarkdownListItem";
+import { Syntax } from "../../nodes/Syntax";
+import { ArrayUtils } from "../utils/ArrayUtils";
+
 export type Config = PrettyFormat.Config;
 export type Printer = (value: unknown, config: Config, indentation: string, depth: number, refs: ReadonlyArray<object>) => string;
 
@@ -223,15 +225,15 @@ function nodeToSnapshotCore(node: Node): object {
         }
     }
 
-    const parserState: IParserState | undefined = node[ParserBase.parserState];
-    const closed: boolean | undefined = parserState && parserState.closed;
-    const lastLineIsBlank: boolean | undefined = parserState && parserState.lastLineIsBlank;
+    // const parserState: IParserState | undefined = node[ParserBase.parserState];
+    // const closed: boolean | undefined = parserState && parserState.closed;
+    // const lastLineIsBlank: boolean | undefined = parserState && parserState.lastLineIsBlank;
 
     return {
         kind: SnapshotSerializer.enumValue(node.kind, SyntaxKind, Placement.AtStart, -Infinity),
         children: SnapshotSerializer.ignoreIfUndefined(children),
-        closed: SnapshotSerializer.ignoreIfUndefined(closed, Placement.Default, -10),
-        lastLineIsBlank: SnapshotSerializer.ignoreIfUndefined(lastLineIsBlank),
+        // closed: SnapshotSerializer.ignoreIfUndefined(closed, Placement.Default, -10),
+        // lastLineIsBlank: SnapshotSerializer.ignoreIfUndefined(lastLineIsBlank),
         pos: node.pos < 0 ?
             SnapshotSerializer.ignore(node.pos) :
             SnapshotSerializer.ordered(node.pos, Placement.AtEnd, 1),
@@ -339,31 +341,41 @@ function markdownLinkDestinationToSnapshot(node: MarkdownLinkDestination): objec
 }
 
 function markdownLinkReferenceToSnapshot(node: MarkdownLinkReference): object {
+    const syntax: ReadonlyArray<Syntax> = node.getSyntax();
+    const label: MarkdownLinkLabel | undefined = ArrayUtils.find(syntax, (node): node is MarkdownLinkLabel => node instanceof MarkdownLinkLabel);
+    const destination: MarkdownLinkDestination | undefined = ArrayUtils.find(syntax, (node): node is MarkdownLinkDestination => node instanceof MarkdownLinkDestination);
+    const title: MarkdownLinkTitle | undefined = ArrayUtils.find(syntax, (node): node is MarkdownLinkTitle => node instanceof MarkdownLinkTitle);
     return {
         ...nodeToSnapshotCore(node),
-        label: node.labelSyntax,
-        destination: node.destinationSyntax,
-        title: SnapshotSerializer.ignoreIfUndefined(node.titleSyntax)
+        label,
+        destination,
+        title: SnapshotSerializer.ignoreIfUndefined(title)
     };
 }
 
 function markdownLinkToSnapshot(node: MarkdownLink): object {
+    const syntax: ReadonlyArray<Syntax> = node.getSyntax();
+    const label: MarkdownLinkLabel | undefined = ArrayUtils.find(syntax, (node): node is MarkdownLinkLabel => node instanceof MarkdownLinkLabel);
+    const destination: MarkdownLinkDestination | undefined = ArrayUtils.find(syntax, (node): node is MarkdownLinkDestination => node instanceof MarkdownLinkDestination);
+    const title: MarkdownLinkTitle | undefined = ArrayUtils.find(syntax, (node): node is MarkdownLinkTitle => node instanceof MarkdownLinkTitle);
     return {
         ...nodeToSnapshotCore(node),
-        label: SnapshotSerializer.ignoreIfUndefined(node.labelSyntax),
-        destination: SnapshotSerializer.ignoreIfUndefined(node.destinationSyntax),
-        title: SnapshotSerializer.ignoreIfUndefined(node.titleSyntax),
-        // resolvedReference: SnapshotSerializer.ignoreIfUndefined(node.resolvedReference)
+        label: SnapshotSerializer.ignoreIfUndefined(label),
+        destination: SnapshotSerializer.ignoreIfUndefined(destination),
+        title: SnapshotSerializer.ignoreIfUndefined(title),
     };
 }
 
 function markdownImageToSnapshot(node: MarkdownImage): object {
+    const syntax: ReadonlyArray<Syntax> = node.getSyntax();
+    const label: MarkdownLinkLabel | undefined = ArrayUtils.find(syntax, (node): node is MarkdownLinkLabel => node instanceof MarkdownLinkLabel);
+    const destination: MarkdownLinkDestination | undefined = ArrayUtils.find(syntax, (node): node is MarkdownLinkDestination => node instanceof MarkdownLinkDestination);
+    const title: MarkdownLinkTitle | undefined = ArrayUtils.find(syntax, (node): node is MarkdownLinkTitle => node instanceof MarkdownLinkTitle);
     return {
         ...nodeToSnapshotCore(node),
-        label: SnapshotSerializer.ignoreIfUndefined(node.label),
-        destination: SnapshotSerializer.ignoreIfUndefined(node.href),
-        title: SnapshotSerializer.ignoreIfUndefined(node.title),
-        // resolvedReference: SnapshotSerializer.ignoreIfUndefined(node.resolvedReference)
+        label: SnapshotSerializer.ignoreIfUndefined(label),
+        destination: SnapshotSerializer.ignoreIfUndefined(destination),
+        title: SnapshotSerializer.ignoreIfUndefined(title),
     };
 }
 

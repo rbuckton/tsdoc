@@ -73,8 +73,7 @@ export namespace MarkdownLinkParser {
 
     interface IReferenceLink {
         kind: "reference";
-        refLabel: string;
-        label?: MarkdownLinkLabel;
+        label: MarkdownLinkLabel | string;
     }
 
     function tryParseReferenceLink(parser: InlineParser, opener: IBracketFrame, pos: number): IReferenceLink | undefined {
@@ -89,13 +88,16 @@ export namespace MarkdownLinkParser {
             // The reference must not contain a bracket. If we know there's a bracket, we don't
             // even bother checking it.
             refLabel = scanner.slice(opener.node.end, pos);
+            if (label) {
+                label.text = refLabel;
+            }
         }
 
         // A reference link is only valid if the reference already exists in the reference map.
         if (refLabel) {
             refLabel = MarkdownUtils.normalizeLinkReference(refLabel);
             if (parser.document.referenceMap.has(refLabel)) {
-                return { kind: "reference", label, refLabel };
+                return { kind: "reference", label: label || refLabel };
             }
         }
 
@@ -166,8 +168,7 @@ export namespace MarkdownLinkParser {
 
         let destination: MarkdownLinkDestination | undefined;
         let title: MarkdownLinkTitle | undefined;
-        let label: MarkdownLinkLabel | undefined;
-        let refLabel: string | undefined;
+        let label: MarkdownLinkLabel | string | undefined;
         switch (linkInfo.kind) {
             case "inline":
                 destination = linkInfo.destination;
@@ -175,7 +176,6 @@ export namespace MarkdownLinkParser {
                 break;
             case "reference":
                 label = linkInfo.label;
-                refLabel = linkInfo.refLabel;
                 break;
         }
 
@@ -185,8 +185,6 @@ export namespace MarkdownLinkParser {
         const node: MarkdownImage | MarkdownLink = opener.token === Token.ExclamationOpenBracketToken ?
             new MarkdownImage({ pos, end, destination, title, label }) :
             new MarkdownLink({ pos, end, destination, title, label });
-
-        parser.setParserState(node, { refLabel });
 
         // move everything between the open and closer into the inline
         let current: Inline | undefined = opener.node.nextSiblingInline;

@@ -63,7 +63,7 @@ export class Document extends Block {
     }
 
     private _attachLinkReference(node: MarkdownLinkReference): void {
-        const refLabel: string = MarkdownUtils.normalizeLinkReference(node.labelSyntax.text);
+        const refLabel: string = MarkdownUtils.normalizeLinkReference(node.label);
         if (!refLabel) return;
 
         let allReferences: MarkdownLinkReference[] | undefined = this._allReferences.get(refLabel);
@@ -78,7 +78,7 @@ export class Document extends Block {
     }
 
     private _detachLinkReference(node: MarkdownLinkReference): void {
-        const refLabel: string = MarkdownUtils.normalizeLinkReference(node.labelSyntax.text);
+        const refLabel: string = MarkdownUtils.normalizeLinkReference(node.label);
         if (!refLabel) return;
 
         const allReferences: MarkdownLinkReference[] | undefined = this._allReferences.get(refLabel);

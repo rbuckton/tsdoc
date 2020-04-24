@@ -1,5 +1,6 @@
 import { SyntaxKind } from "./SyntaxKind";
 import { Syntax, ISyntaxParameters } from "./Syntax";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 export interface IMarkdownLinkDestinationParameters extends ISyntaxParameters {
     href?: string;
@@ -21,7 +22,7 @@ export class MarkdownLinkDestination extends Syntax {
     }
 
     public get href(): string {
-        return this._href || "";
+        return this._href || '';
     }
 
     public set href(value: string) {
@@ -42,5 +43,10 @@ export class MarkdownLinkDestination extends Syntax {
             this._bracketed = value;
             this.afterChange();
         }
+    }
+
+    /** @override */
+    protected print(printer: TSDocPrinter): void {
+        printer.write(this.href);
     }
 }

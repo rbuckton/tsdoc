@@ -1,5 +1,5 @@
 import { SyntaxKind } from "./SyntaxKind";
-import { IParserState, ParserBase } from "../parser/ParserBase";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 // type-only imports
 type Document = import("./Document").Document;
@@ -279,7 +279,7 @@ export abstract class Node {
      */
     public forEachSyntax<A extends any[], T>(cb: (node: Syntax, ...args: A) => T | undefined, ...args: A): T | undefined {
         for (const syntax of this.getSyntax()) {
-            const result: T | undefined = syntax && cb(syntax, ...args);
+            const result: T | undefined = cb(syntax, ...args);
             if (result !== undefined) {
                 return result;
             }
@@ -327,7 +327,7 @@ export abstract class Node {
     }
 
     /** @virtual */
-    protected getSyntax(): ReadonlyArray<Syntax | undefined> {
+    public getSyntax(): ReadonlyArray<Syntax> {
         return [];
     }
 
@@ -418,11 +418,6 @@ export abstract class Node {
         if (this._ownerDocument) {
             this._ownerDocument._raiseOnNodeChanging(this);
         }
-        const state: IParserState | undefined = this[ParserBase.parserState];
-        if (state) {
-            this.applyParserState(state);
-            this[ParserBase.parserState] = undefined;
-        }
     }
 
     protected afterChange(): void {
@@ -431,19 +426,11 @@ export abstract class Node {
         }
     }
 
-    /** @ignore */
-    public [ParserBase.parserState]?: IParserState;
+    protected print?(printer: TSDocPrinter): void;
 
-    /**
-     * This method supports the tsdoc infrastructure and is not intended to be used in user code.
-     */
-    protected getParserState(): IParserState | undefined {
-        return this[ParserBase.parserState];
+    protected printNode(printer: TSDocPrinter, node: Node) {
+        if (node.print) {
+            node.print(printer);
+        }
     }
-
-    /**
-     * This method supports the tsdoc infrastructure and is not intended to be used in user code.
-     * @virtual
-     */
-    protected applyParserState(state: IParserState): void {}
 }

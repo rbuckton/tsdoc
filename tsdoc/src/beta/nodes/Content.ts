@@ -201,7 +201,6 @@ export abstract class Content extends Node {
         return undefined;
     }
 
-
     protected abstract print(printer: TSDocPrinter): void;
 
     protected printChildren(printer: TSDocPrinter): void {

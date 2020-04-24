@@ -58,4 +58,13 @@ export class ArrayUtils {
     public static exact(searchResult: number): number {
         return searchResult < 0 ? -1 : searchResult;
     }
+
+    public static find<T, U extends T>(array: readonly T[], callback: (value: T) => value is U): U | undefined;
+    public static find<T>(array: readonly T[], callback: (value: T) => boolean): T | undefined;
+    public static find<T>(array: readonly T[], callback: (value: T) => boolean): T | undefined {
+        for (const item of array) {
+            if (callback(item)) return item;
+        }
+        return undefined;
+    }
 }

@@ -19,6 +19,7 @@ export namespace MarkdownLinkDestinationParser {
         const bracketed: boolean = token === Token.LessThanToken;
         scanner.scan();
 
+        // TODO(rbuckton): Allow storing href in bracketed form: https://spec.commonmark.org/0.29/#link-destination
         return new MarkdownLinkDestination({ pos, end, href, bracketed });
     }
 }

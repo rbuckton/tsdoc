@@ -56,8 +56,10 @@ export class DocBlockTag extends Block {
     /**
      * @override
      */
-    protected getSyntax(): ReadonlyArray<Syntax | undefined> {
-        return [this._tagNameSyntax];
+    public getSyntax(): ReadonlyArray<Syntax> {
+        const syntax: Syntax[] = [];
+        if (this._tagNameSyntax) syntax.push(this._tagNameSyntax);
+        return syntax;
     }
 
     /** @override */

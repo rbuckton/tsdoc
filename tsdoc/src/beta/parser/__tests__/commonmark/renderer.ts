@@ -84,7 +84,7 @@ export function render(node: Node): string {
     function link(node: MarkdownLink, entering: boolean): void {
         const attrs: [string, string][] = [];
         if (entering) {
-            attrs.push(['href', esc(node.href)]);
+            attrs.push(['href', esc(node.destination)]);
             if (node.title) {
                 attrs.push(['title', esc(node.title)]);
             }
@@ -97,7 +97,7 @@ export function render(node: Node): string {
     function image(node: MarkdownImage, entering: boolean): void {
         if (entering) {
             if (disableTags === 0) {
-                lit('<img src="' + esc(node.href) + '" alt="');
+                lit('<img src="' + esc(node.destination) + '" alt="');
             }
             disableTags++;
         } else {

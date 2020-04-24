@@ -6,12 +6,12 @@ import { Syntax } from "./Syntax";
 import { Node } from "./Node";
 import { MarkdownUtils } from "../parser/utils/MarkdownUtils";
 import { MarkdownLinkReference } from "./MarkdownLinkReference";
-import { IParserState } from "../parser/ParserBase";
+import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 export interface ILinkBaseParameters extends IInlineParameters {
-    destination?: MarkdownLinkDestination;
-    title?: MarkdownLinkTitle;
-    label?: MarkdownLinkLabel;
+    destination?: MarkdownLinkDestination | string;
+    title?: MarkdownLinkTitle | string;
+    label?: MarkdownLinkLabel | string;
 }
 
 export abstract class LinkBase extends Inline {
@@ -21,38 +21,41 @@ export abstract class LinkBase extends Inline {
     private _resolvedReference: MarkdownLinkReference | undefined;
     private _documentVersion: number = -1;
 
-    public constructor(parameters?: ILinkBaseParameters) {
+    public constructor(parameters: ILinkBaseParameters = {}) {
         super(parameters);
-        this.attachSyntax(this._destinationSyntax = parameters && parameters.destination);
-        this.attachSyntax(this._titleSyntax = parameters && parameters.title);
-        this.attachSyntax(this._labelSyntax = parameters && parameters.label);
+        if (parameters.destination !== undefined && parameters.label !== undefined) {
+            throw new Error('A link cannot specify both a destination and a label');
+        }
+        if (parameters.title !== undefined && parameters.label !== undefined) {
+            throw new Error('A link cannot specify both a title and a label');
+        }
+        this.attachSyntax(this._destinationSyntax =
+            parameters.destination instanceof MarkdownLinkDestination ? parameters.destination :
+            parameters.destination !== undefined ? new MarkdownLinkDestination({ href: parameters.destination }) :
+            undefined);
+        this.attachSyntax(this._titleSyntax =
+            parameters.title instanceof MarkdownLinkTitle ? parameters.title :
+            parameters.title !== undefined ? new MarkdownLinkTitle({ text: parameters.title }) :
+            undefined);
+        this.attachSyntax(this._labelSyntax =
+            parameters.label instanceof MarkdownLinkLabel ? parameters.label :
+            parameters.label !== undefined ? new MarkdownLinkLabel({ text: parameters.label }) :
+            undefined);
     }
 
-    public get destinationSyntax(): MarkdownLinkDestination | undefined {
-        return this._destinationSyntax;
-    }
-
-    public get titleSyntax(): MarkdownLinkTitle | undefined {
-        return this._titleSyntax;
-    }
-
-    public get labelSyntax(): MarkdownLinkLabel | undefined {
-        return this._labelSyntax;
-    }
-
-    public get href(): string {
-        if (this.destinationSyntax) return this.destinationSyntax.href;
+    public get destination(): string {
+        if (this._destinationSyntax) return this._destinationSyntax.href;
         const linkReference: MarkdownLinkReference | undefined = this._resolveLinkReference();
-        return linkReference ? linkReference.href : "";
+        return linkReference ? linkReference.destination : "";
     }
 
-    public set href(value: string) {
+    public set destination(value: string) {
         this._applyLinkReference();
         this._ensureDestinationSyntax().href = value;
     }
 
     public get title(): string | undefined {
-        if (this.titleSyntax) return this.titleSyntax.text;
+        if (this._titleSyntax) return this._titleSyntax.text;
         const linkReference: MarkdownLinkReference | undefined = this._resolveLinkReference();
         return linkReference ? linkReference.title : undefined;
     }
@@ -101,7 +104,7 @@ export abstract class LinkBase extends Inline {
      * Iterates through each syntactic and content element of this node.
      * @param cb The callback to execute for each node. If the callback returns a value other than `undefined`, iteration
      * stops and that value is returned.
-     * 
+     *
      * @override
      */
     public forEachNode<A extends any[], T>(cb: (node: Node, ...args: A) => T | undefined, ...args: A): T | undefined {
@@ -111,23 +114,34 @@ export abstract class LinkBase extends Inline {
     }
 
     /** @override */
-    protected getSyntax(): ReadonlyArray<Syntax | undefined> {
-        return [
-            this.destinationSyntax,
-            this.titleSyntax,
-            this.labelSyntax
-        ];
+    public getSyntax(): ReadonlyArray<Syntax> {
+        const syntax: Syntax[] = [];
+        if (this._destinationSyntax || this._titleSyntax) {
+            if (this._destinationSyntax) syntax.push(this._destinationSyntax);
+            if (this._titleSyntax) syntax.push(this._titleSyntax);
+        } else if (this._labelSyntax) {
+            syntax.push(this._labelSyntax);
+        }
+        return syntax;
     }
 
     private _ensureDestinationSyntax(): MarkdownLinkDestination {
+        this._applyLinkReference();
         if (!this._destinationSyntax) {
+            const labelSyntax: MarkdownLinkLabel | undefined = this._labelSyntax;
+            this._labelSyntax = undefined;
+            this.detachSyntax(labelSyntax);
             this.attachSyntax(this._destinationSyntax = new MarkdownLinkDestination());
         }
         return this._destinationSyntax;
     }
 
     private _ensureTitleSyntax(): MarkdownLinkTitle {
+        this._applyLinkReference();
         if (!this._titleSyntax) {
+            const labelSyntax: MarkdownLinkLabel | undefined = this._labelSyntax;
+            this._labelSyntax = undefined;
+            this.detachSyntax(labelSyntax);
             this.attachSyntax(this._titleSyntax = new MarkdownLinkTitle());
         }
         return this._titleSyntax;
@@ -135,13 +149,19 @@ export abstract class LinkBase extends Inline {
 
     private _ensureLabelSyntax(): MarkdownLinkLabel {
         if (!this._labelSyntax) {
+            const destinationSyntax: MarkdownLinkDestination | undefined = this._destinationSyntax;
+            this._destinationSyntax = undefined;
+            this.detachSyntax(destinationSyntax);
+            const titleSyntax: MarkdownLinkTitle | undefined = this._titleSyntax;
+            this._titleSyntax = undefined;
+            this.detachSyntax(titleSyntax);
             this.attachSyntax(this._labelSyntax = new MarkdownLinkLabel());
         }
         return this._labelSyntax;
     }
 
     private _maybeInvalidateResolvedReference(): void {
-        if (this._resolvedReference && (!this.ownerDocument || !this.labelSyntax || Node.getVersion(this.ownerDocument) !== this._documentVersion)) {
+        if (this._resolvedReference && (!this.ownerDocument || !this._labelSyntax || Node.getVersion(this.ownerDocument) !== this._documentVersion)) {
             this._resolvedReference = undefined;
             this._documentVersion = -1;
         }
@@ -153,9 +173,6 @@ export abstract class LinkBase extends Inline {
             let refLabel: string | undefined;
             if (this.label) {
                 refLabel = MarkdownUtils.normalizeLinkReference(this.label);
-            } else {
-                const state: IParserState | undefined = this.getParserState();
-                refLabel = state && state.refLabel;
             }
             if (refLabel) {
                 const linkReference: MarkdownLinkReference | undefined = this.ownerDocument.referenceMap.get(refLabel);
@@ -171,7 +188,7 @@ export abstract class LinkBase extends Inline {
     private _applyLinkReference(): void {
         const linkReference: MarkdownLinkReference | undefined = this._resolveLinkReference();
         if (linkReference) {
-            this._ensureDestinationSyntax().href = linkReference.href;
+            this._ensureDestinationSyntax().href = linkReference.destination;
             if (linkReference.title !== undefined) {
                 this._ensureTitleSyntax().text = linkReference.title;
             }
@@ -179,4 +196,22 @@ export abstract class LinkBase extends Inline {
             this._maybeInvalidateResolvedReference();
         }
     }
+
+    /** @override */
+    protected print(printer: TSDocPrinter): void {
+        this.printLinkContent(printer);
+        if (this._destinationSyntax) {
+            printer.write('(');
+            this.printNode(printer, this._destinationSyntax);
+            if (this._titleSyntax) {
+                printer.write(' ');
+                this.printNode(printer, this._titleSyntax);
+            }
+            printer.write(')');
+        } else if (this._labelSyntax) {
+            this.printNode(printer, this._labelSyntax);
+        }
+    }
+
+    protected abstract printLinkContent(printer: TSDocPrinter): void;
 }

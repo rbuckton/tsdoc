@@ -3,17 +3,7 @@ import { Scanner } from "./Scanner";
 import { LineMap } from "./LineMap";
 import { IMapping } from "./Preprocessor";
 
-export interface IParserState {
-    closed?: boolean;
-    lastLineIsBlank?: boolean; 
-    lastLineChecked?: boolean;
-    refLabel?: string;
-} 
-
 export abstract class ParserBase {
-    /** @ignore */
-    public static readonly parserState: unique symbol = Symbol();
-
     private _scanner: Scanner;
     private _lineMap: LineMap | undefined;
     private _weakParserState = new WeakMap<object, WeakMap<Node, any>>();
@@ -43,23 +33,5 @@ export abstract class ParserBase {
         let nodeState: any = nodeMap.get(node);
         if (nodeState === undefined) nodeMap.set(node, nodeState = createState(node, key));
         return nodeState;
-    }
-
-    public getParserState(node: Node): IParserState {
-        let state: IParserState | undefined = node[ParserBase.parserState];
-        if (!state) {
-            state = node[ParserBase.parserState] = {};
-        }
-        return state;
-    }
-
-    public setParserState(node: Node, newState: Partial<IParserState>): void {
-        const state: IParserState = this.getParserState(node);
-        for (const key of Object.keys(newState) as Array<keyof IParserState>) {
-            const value: unknown = newState[key];
-            if (value !== undefined) {
-                state[key] = value as never;
-            }
-        }
     }
 }

@@ -22,6 +22,20 @@ import { ContentWriter } from "./ContentWriter";
 import { IMapping } from "./Preprocessor";
 import { ParserBase } from "./ParserBase";
 
+interface IBlockState {
+    closed?: boolean;
+    lastLineIsBlank?: boolean;
+    lastLineChecked?: boolean;
+}
+
+function createBlockState(): IBlockState {
+    return {};
+}
+
+function getState(parser: BlockParser, node: Block): IBlockState {
+    return parser.getState(parser, node, createBlockState);
+}
+
 export class BlockParser extends ParserBase {
     private _line: number;
     private _linePos: number;
@@ -48,7 +62,7 @@ export class BlockParser extends ParserBase {
         this._previousLineEnd= -1;
         this._hasUnmatchedBlocks = false;
         this._blockSyntaxParsers = BlockParser.getDefaultBlockSyntaxParsers();
-            this._blockSyntaxParserMap = new Map();
+        this._blockSyntaxParserMap = new Map();
         for (const blockSyntaxParser of this._blockSyntaxParsers) {
             this._blockSyntaxParserMap.set(blockSyntaxParser.kind, blockSyntaxParser);
         }
@@ -153,7 +167,7 @@ export class BlockParser extends ParserBase {
 
         // step 1: attempt to continue any open blocks that can accept the current line
         let nextBlock: Block | undefined = block.lastChildBlock;
-        while (nextBlock && !this.getParserState(nextBlock).closed) {
+        while (nextBlock && !getState(this, nextBlock).closed) {
             block = nextBlock;
             switch (this._continue(block)) {
                 case ContinueResult.Matched:
@@ -199,7 +213,7 @@ export class BlockParser extends ParserBase {
             if (this._blank) {
                 const lastChild: Block | undefined = block.lastChildBlock;
                 if (lastChild) {
-                    this.getParserState(lastChild).lastLineIsBlank = true;
+                    getState(this, lastChild).lastLineIsBlank = true;
                 }
             }
 
@@ -210,7 +224,7 @@ export class BlockParser extends ParserBase {
 
             let ancestor: Block | undefined = block;
             while (ancestor) {
-                this.getParserState(ancestor).lastLineIsBlank = lastLineIsBlank;
+                getState(this, ancestor).lastLineIsBlank = lastLineIsBlank;
                 ancestor = ancestor.parentBlock;
             }
 
@@ -252,7 +266,7 @@ export class BlockParser extends ParserBase {
 
     public finish(block: Block, end: number = this._previousLineEnd): void {
         const parent: Block | undefined = block.parentBlock;
-        this.getParserState(block).closed = true;
+        getState(this, block).closed = true;
         block.end = end;
         try {
             const blockSyntaxParser: IBlockSyntaxParser<Block> | undefined = this._blockSyntaxParserMap.get(block.kind);
@@ -338,11 +352,11 @@ export class BlockParser extends ParserBase {
     public endsWithBlankLine(block: Block): boolean {
         let current: Block | undefined = block;
         while (current) {
-            if (this.getParserState(current).lastLineIsBlank) {
+            if (getState(this, current).lastLineIsBlank) {
                 return true;
             }
-            if (!this.getParserState(current).lastLineChecked) {
-                this.getParserState(current).lastLineChecked = true;
+            if (!getState(this, current).lastLineChecked) {
+                getState(this, current).lastLineChecked = true;
                 if (current.isList()) {
                     current = current.lastChildListItem;
                     continue;
