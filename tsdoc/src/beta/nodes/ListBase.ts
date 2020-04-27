@@ -1,18 +1,14 @@
 import { Block, IBlockParameters } from "./Block";
-import { ListItemBase } from "./ListItemBase";
+import { ListItemBase, IListItemContainer, IListItemContainerParameters } from "./ListItemBase";
+import { ContentUtils } from "./ContentUtils";
 
-export interface IListMarker {
-    readonly markerOffset: number;
-    readonly tight: boolean;
-    readonly padding: number;
+export interface IListBaseParameters extends IBlockParameters, IListItemContainerParameters {
 }
 
-export interface IListBaseParameters extends IBlockParameters {
-}
-
-export abstract class ListBase extends Block {
+export abstract class ListBase extends Block implements IListItemContainer {
     public constructor(parameters?: IListBaseParameters) {
         super(parameters);
+        ContentUtils.appendContent(this, parameters && parameters.content);
     }
 
     /**
@@ -28,11 +24,6 @@ export abstract class ListBase extends Block {
     public get lastChildListItem(): ListItemBase | undefined {
         return this.lastChild && this.lastChild.isListItem() ? this.lastChild : undefined;
     }
-
-    /**
-     * Gets the list marker for this list.
-     */
-    public abstract get listMarker(): IListMarker;
 
     /** @override */
     public isList(): true {

@@ -5,12 +5,30 @@ import { Token } from "../Token";
 import { IScannerState, Scanner } from "../Scanner";
 import { Node } from "../../nodes/Node";
 import { MarkdownListItem } from "../../nodes/MarkdownListItem";
-import { ListMarker, MarkdownList } from "../../nodes/MarkdownList";
+import { MarkdownList } from "../../nodes/MarkdownList";
+import { ListMarker } from "../../nodes/ListItemBase";
 import { Preprocessor } from "../Preprocessor";
 import { UnicodeUtils } from "../utils/UnicodeUtils";
 
 export namespace MarkdownListItemParser {
     export const kind: SyntaxKind.MarkdownListItem = SyntaxKind.MarkdownListItem;
+
+    interface IMutableOrderedListMarker {
+        markerOffset: number;
+        ordered: true;
+        bulletToken: Token.OrderedListItemBullet;
+        start: number;
+        tight: boolean;
+        padding: number;
+    }
+    
+    interface IMutableUnorderedListMarker {
+        markerOffset: number;
+        ordered: false;
+        bulletToken: Token.UnorderedListItemBullet;
+        tight: boolean;
+        padding: number;
+    }
 
     function parseListMarker(parser: BlockParser, container: Node): ListMarker | undefined {
         if (parser.indent >= 4) {
@@ -22,7 +40,7 @@ export namespace MarkdownListItemParser {
         const preprocessor: Preprocessor = scanner.preprocessor;
         const token: Token = scanner.token();
         const state: IScannerState = scanner.getState();
-        let marker: ListMarker | undefined;
+        let marker: IMutableOrderedListMarker | IMutableUnorderedListMarker | undefined;
         if (Token.isUnorderedListItemBullet(token)) {
             marker = {
                 ordered: false,
@@ -114,10 +132,10 @@ export namespace MarkdownListItemParser {
             if (listMarker) {
                 parser.finishUnmatchedBlocks();
                 if (!parser.tip ||
-                    parser.tip.kind !== SyntaxKind.MarkdownList ||
-                    container.kind !== SyntaxKind.MarkdownList ||
-                    !listsMatch((container as MarkdownList).listMarker, listMarker)) {
-                    parser.pushBlock(new MarkdownList({ listMarker }), pos);
+                    !parser.tip.isListItemContainer() ||
+                    !container.isListItemContainer() ||
+                    container.firstChildListItem && !listsMatch(container.firstChildListItem.listMarker, listMarker)) {
+                    parser.pushBlock(new MarkdownList(), pos);
                 }
                 parser.pushBlock(new MarkdownListItem({ listMarker }), pos);
                 return StartResult.Container;

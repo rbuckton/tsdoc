@@ -89,7 +89,11 @@ export class MarkdownCodeBlock extends Block {
             validateInfo(this._info, value, /*forCodeFence*/ true) ||
             validateLiteral(this._literal, value, /*forCodeFence*/ true);
         if (message) throw new Error(message);
-        this._codeFence = value;
+        if (this._codeFence !== value) {
+            this.beforeChange();
+            this._codeFence = value;
+            this.afterChange();
+        }
     }
 
     public get info(): string {
@@ -99,7 +103,11 @@ export class MarkdownCodeBlock extends Block {
     public set info(value: string) {
         const message: string | undefined = validateInfo(value, this._codeFence, /*forCodeFence*/ false);
         if (message) throw new Error(message);
-        this._info = value;
+        if (this._info !== value) {
+            this.beforeChange();
+            this._info = value;
+            this.afterChange();
+        }
     }
 
     public get literal(): string {
@@ -109,7 +117,11 @@ export class MarkdownCodeBlock extends Block {
     public set literal(value: string) {
         const message: string | undefined = validateLiteral(value, this._codeFence, /*forCodeFence*/ false);
         if (message) throw new Error(message);
-        this._literal = value;
+        if (this._literal !== value) {
+            this.beforeChange();
+            this._literal = value;
+            this.afterChange();
+        }
     }
 
     /** @override */

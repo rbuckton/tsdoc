@@ -5,6 +5,16 @@ import { Content, IContentParameters } from "./Content";
 export interface IInlineParameters extends IContentParameters {
 }
 
+export interface IInlineContainer extends Content {
+    isInlineContainer(): true;
+    readonly firstChildInline: Inline | undefined;
+    readonly lastChildInline: Inline | undefined;
+}
+
+export interface IInlineContainerParameters {
+    content?: Inline | ReadonlyArray<Inline> | string;
+}
+
 export abstract class Inline extends Content {
     // @ts-ignore
     private _inlineBrand: never;

@@ -21,7 +21,7 @@ export class DocTagName extends Syntax {
     }
 
     public get text(): string {
-        return this._text || "@unknown";
+        return this._text || '@unknown';
     }
 
     public set text(value: string) {

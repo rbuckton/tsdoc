@@ -4,6 +4,16 @@ import { Inline } from "./Inline";
 export interface IBlockParameters extends IContentParameters {
 }
 
+export interface IBlockContainer extends Content {
+    isBlockContainer(): true;
+    readonly firstChildBlock: Block | undefined;
+    readonly lastChildBlock: Block | undefined;
+}
+
+export interface IBlockContainerParameters {
+    content?: string | Inline | Block | ReadonlyArray<string | Inline | Block>;
+}
+
 export abstract class Block extends Content {
     // @ts-ignore
     private _blockBrand: never;

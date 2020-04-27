@@ -3,13 +3,15 @@ import { SyntaxKind } from "./SyntaxKind";
 import { Token } from "../parser/Token";
 import { TSDocPrinter } from "../parser/TSDocPrinter";
 import { StringUtils } from "../parser/utils/StringUtils";
+import { ContentUtils } from "./ContentUtils";
+import { Inline, IInlineContainer, IInlineContainerParameters } from "./Inline";
 
-export interface IMarkdownHeadingParameters extends IBlockParameters {
+export interface IMarkdownHeadingParameters extends IBlockParameters, IInlineContainerParameters {
     headingToken: Token.Heading;
     level: number;
 }
 
-export class MarkdownHeading extends Block {
+export class MarkdownHeading extends Block implements IInlineContainer {
     private _headingToken: Token.Heading | undefined;
     private _level: number | undefined;
 
@@ -17,6 +19,7 @@ export class MarkdownHeading extends Block {
         super(parameters);
         this._headingToken = parameters && parameters.headingToken;
         this._level = parameters && parameters.level;
+        ContentUtils.appendContent(this, parameters && parameters.content);
     }
 
     /** @override */
@@ -50,6 +53,20 @@ export class MarkdownHeading extends Block {
             this._level = value;
             this.afterChange();
         }
+    }
+
+    /**
+     * Gets the first child of this node, if that child is an `Inline`.
+     */
+    public get firstChildInline(): Inline | undefined {
+        return this.firstChild && this.firstChild.isInline() ? this.firstChild : undefined;
+    }
+
+    /**
+     * Gets the last child of this node, if that child is an `Inline`.
+     */
+    public get lastChildInline(): Inline | undefined {
+        return this.lastChild && this.lastChild.isInline() ? this.lastChild : undefined;
     }
 
     /** @override */

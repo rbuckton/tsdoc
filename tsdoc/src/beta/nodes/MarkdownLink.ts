@@ -6,7 +6,13 @@ export interface IMarkdownLinkParameters extends ILinkBaseParameters {
 }
 
 export class MarkdownLink extends LinkBase {
-    public constructor(parameters?: IMarkdownLinkParameters) {
+    public constructor(parameters: IMarkdownLinkParameters = {}) {
+        if (parameters.destination !== undefined && parameters.label !== undefined) {
+            throw new Error('A link cannot specify both a destination and a label');
+        }
+        if (parameters.title !== undefined && parameters.label !== undefined) {
+            throw new Error('A link cannot specify both a title and a label');
+        }
         super(parameters);
     }
 

@@ -3,6 +3,7 @@ import { SyntaxKind } from "../../../nodes/SyntaxKind";
 import { MarkdownCodeBlock } from "../../../nodes/MarkdownCodeBlock";
 import { Run } from "../../../nodes/Run";
 import { MarkdownList } from "../../../nodes/MarkdownList";
+import { ListMarker } from "../../../nodes/ListItemBase";
 import { MarkdownParagraph } from "../../../nodes/MarkdownParagraph";
 import { MarkdownHeading } from "../../../nodes/MarkdownHeading";
 import { MarkdownCodeSpan } from "../../../nodes/MarkdownCodeSpan";
@@ -14,7 +15,6 @@ import { MarkdownBlockQuote } from "../../../nodes/MarkdownBlockQuote";
 import { MarkdownListItem } from "../../../nodes/MarkdownListItem";
 import { MarkdownHtmlInline } from "../../../nodes/MarkdownHtmlInline";
 import { MarkdownHtmlBlock } from "../../../nodes/MarkdownHtmlBlock";
-import { MarkdownAutoLink } from "../../../nodes/MarkdownAutoLink";
 
 // emulates the commonmark renderer for tests
 
@@ -75,12 +75,6 @@ export function render(node: Node): string {
         cr();
     }
 
-    function auto_link(node: MarkdownAutoLink): void {
-        tag('a', [['href', esc(node.href)]]);
-        out(node.text);
-        tag('/a');
-    }
-
     function link(node: MarkdownLink, entering: boolean): void {
         const attrs: [string, string][] = [];
         if (entering) {
@@ -120,8 +114,8 @@ export function render(node: Node): string {
     }
 
     function paragraph(node: MarkdownParagraph, entering: boolean): void {
-        const grandparent: Node = node.parent!.parent!;
-        if (grandparent && grandparent.isList() && grandparent.listMarker.tight) {
+        const parent: Node = node.parent!;
+        if (parent && parent.isListItem() && parent.listMarker.tight) {
             return;
         }
         if (entering) {
@@ -178,11 +172,12 @@ export function render(node: Node): string {
     }
 
     function list(node: MarkdownList, entering: boolean) {
-        const tagname: string = !node.listMarker.ordered ? 'ul' : 'ol';
+        const listMarker: ListMarker | undefined = node.firstChildListItem ? node.firstChildListItem.listMarker as ListMarker : undefined;
+        const tagname: string = listMarker && listMarker.ordered ? 'ol' : 'ul';
         const attrs: [string, string][] = [];
 
         if (entering) {
-            const start: number | undefined = node.listMarker.ordered ? node.listMarker.start : undefined;
+            const start: number | undefined = listMarker && listMarker.ordered ? listMarker.start : undefined;
             if (start !== undefined && start !== 1) {
                 attrs.push(['start', start.toString()]);
             }
@@ -298,9 +293,6 @@ export function render(node: Node): string {
                 image(node as MarkdownImage, true);
                 if (node.isContent()) node.forEachChild(emit);
                 image(node as MarkdownImage, false);
-                break;
-            case SyntaxKind.MarkdownAutoLink:
-                auto_link(node as MarkdownAutoLink);
                 break;
             case SyntaxKind.MarkdownHtmlInline:
                 html_inline(node as MarkdownHtmlInline);

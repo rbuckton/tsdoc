@@ -5,6 +5,7 @@ import { MarkdownLinkTitle } from "./MarkdownLinkTitle";
 import { Syntax } from "./Syntax";
 import { Block, IBlockParameters } from "./Block";
 import { TSDocPrinter } from "../parser/TSDocPrinter";
+import { Node } from "./Node";
 
 export interface IMarkdownLinkReferenceParameters extends IBlockParameters {
     label?: MarkdownLinkLabel | string;
@@ -19,17 +20,16 @@ export class MarkdownLinkReference extends Block {
 
     public constructor(parameters: IMarkdownLinkReferenceParameters = {}) {
         super(parameters);
-        this.attachSyntax(this._labelSyntax = parameters.label instanceof MarkdownLinkLabel ?
-            parameters.label :
+        this.attachSyntax(this._labelSyntax =
+            parameters.label instanceof MarkdownLinkLabel ? parameters.label :
             new MarkdownLinkLabel({ text: parameters.label }));
-        this.attachSyntax(this._destinationSyntax = parameters.destination instanceof MarkdownLinkDestination ?
-                parameters.destination :
-                new MarkdownLinkDestination({ href: parameters.destination }));
-        if (parameters.title) {
-            this.attachSyntax(this._titleSyntax = parameters.title instanceof MarkdownLinkTitle ?
-                parameters.title :
-                new MarkdownLinkTitle({ text: parameters.title }));
-        }
+        this.attachSyntax(this._destinationSyntax =
+            parameters.destination instanceof MarkdownLinkDestination ? parameters.destination :
+            new MarkdownLinkDestination({ text: parameters.destination }));
+        this.attachSyntax(this._titleSyntax =
+            parameters.title instanceof MarkdownLinkTitle ? parameters.title :
+            parameters.title !== undefined ? new MarkdownLinkTitle({ text: parameters.title }) :
+            undefined);
     }
 
     /**
@@ -37,10 +37,6 @@ export class MarkdownLinkReference extends Block {
      */
     public get kind(): SyntaxKind.MarkdownLinkReference {
         return SyntaxKind.MarkdownLinkReference;
-    }
-
-    public get titleSyntax(): MarkdownLinkTitle | undefined {
-        return this._titleSyntax;
     }
 
     public get label(): string {
@@ -52,11 +48,11 @@ export class MarkdownLinkReference extends Block {
     }
 
     public get destination(): string {
-        return this._destinationSyntax.href;
+        return this._destinationSyntax.text;
     }
 
     public set destination(value: string) {
-        this._destinationSyntax.href = value;
+        this._destinationSyntax.text = value;
     }
 
     public get title(): string | undefined {
@@ -95,12 +91,12 @@ export class MarkdownLinkReference extends Block {
 
     /** @override */
     protected print(printer: TSDocPrinter): void {
-        this.printNode(printer, this._labelSyntax);
+        Node._printNode(printer, this._labelSyntax);
         printer.write(': ');
-        this.printNode(printer, this._destinationSyntax);
+        Node._printNode(printer, this._destinationSyntax);
         if (this._titleSyntax) {
             printer.write(' ');
-            this.printNode(printer, this._titleSyntax);
+            Node._printNode(printer, this._titleSyntax);
         }
     }
 }

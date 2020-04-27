@@ -1,16 +1,17 @@
 import { SyntaxKind } from "./SyntaxKind";
 import { Node, DocumentPosition } from "./Node";
-import { Block, IBlockParameters } from "./Block";
+import { Block, IBlockParameters, IBlockContainer, IBlockContainerParameters } from "./Block";
 import { MarkdownLinkReference } from "./MarkdownLinkReference";
 import { MarkdownUtils } from "../parser/utils/MarkdownUtils";
 import { MarkdownLinkLabel } from "./MarkdownLinkLabel";
 import { TSDocPrinter } from "../parser/TSDocPrinter";
+import { ContentUtils } from "./ContentUtils";
 
-export interface IDocumentParameters extends IBlockParameters {
+export interface IDocumentParameters extends IBlockParameters, IBlockContainerParameters {
     text?: string;
 }
 
-export class Document extends Block {
+export class Document extends Block implements IBlockContainer {
     private _text: string | undefined;
     private _referenceMap = new Map<string, MarkdownLinkReference>();
     private _allReferences = new Map<string, MarkdownLinkReference[]>();
@@ -18,6 +19,7 @@ export class Document extends Block {
     public constructor(parameters?: IDocumentParameters) {
         super(parameters);
         this._text = parameters && parameters.text;
+        ContentUtils.appendContent(this, parameters && parameters.content);
     }
 
     /** @override */
@@ -130,7 +132,7 @@ export class Document extends Block {
     }
 
     /** @override */
-    protected setOwnerDocument(ownerDocument: Document | undefined): void {
+    protected _setOwnerDocument(ownerDocument: Document | undefined): void {
     }
 
     /** @override */

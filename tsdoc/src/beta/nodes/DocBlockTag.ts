@@ -1,20 +1,24 @@
 import { SyntaxKind } from "./SyntaxKind";
 import { DocTagName } from "./DocTagName";
-import { Block, IBlockParameters } from "./Block";
+import { Block, IBlockParameters, IBlockContainer, IBlockContainerParameters } from "./Block";
 import { Node } from "./Node";
 import { Syntax } from "./Syntax";
 import { TSDocPrinter } from "../parser/TSDocPrinter";
+import { ContentUtils } from "./ContentUtils";
 
-export interface IDocBlockTagParameters extends IBlockParameters {
-    tagName?: DocTagName;
+export interface IDocBlockTagParameters extends IBlockParameters, IBlockContainerParameters {
+    tagName?: DocTagName | string;
 }
 
-export class DocBlockTag extends Block {
-    private _tagNameSyntax: DocTagName | undefined;
+export class DocBlockTag extends Block implements IBlockContainer {
+    private _tagNameSyntax: DocTagName;
 
-    public constructor(parameters?: IDocBlockTagParameters) {
+    public constructor(parameters: IDocBlockTagParameters = {}) {
         super(parameters);
-        this.attachSyntax(this._tagNameSyntax = parameters && parameters.tagName);
+        this.attachSyntax(this._tagNameSyntax =
+            parameters.tagName instanceof DocTagName ? parameters.tagName :
+            new DocTagName({ text: parameters.tagName }));
+        ContentUtils.appendContent(this, parameters && parameters.content);
     }
 
     /**
@@ -24,19 +28,12 @@ export class DocBlockTag extends Block {
         return SyntaxKind.DocBlockTag;
     }
 
-    public get tagNameSyntax(): DocTagName {
-        if (!this._tagNameSyntax) {
-            this.attachSyntax(this._tagNameSyntax = new DocTagName());
-        }
-        return this._tagNameSyntax;
-    }
-
     public get tagName(): string {
-        return this.tagNameSyntax.text;
+        return this._tagNameSyntax.text;
     }
 
     public set tagName(value: string) {
-        this.tagNameSyntax.text = value;
+        this._tagNameSyntax.text = value;
     }
 
     /**
@@ -57,9 +54,7 @@ export class DocBlockTag extends Block {
      * @override
      */
     public getSyntax(): ReadonlyArray<Syntax> {
-        const syntax: Syntax[] = [];
-        if (this._tagNameSyntax) syntax.push(this._tagNameSyntax);
-        return syntax;
+        return [this._tagNameSyntax];
     }
 
     /** @override */

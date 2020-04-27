@@ -1,12 +1,52 @@
-import { Block, IBlockParameters } from "./Block";
-import { ListBase, IListMarker } from "./ListBase";
+import { Token } from "../parser/Token";
+import { Block, IBlockParameters, IBlockContainer, IBlockContainerParameters } from "./Block";
+import { ListBase } from "./ListBase";
+import { ContentUtils } from "./ContentUtils";
+import { Content } from "./Content";
 
-export interface IListItemBaseParameters extends IBlockParameters {
+export interface IOrderedListMarker {
+    readonly markerOffset: number;
+    readonly ordered: true;
+    readonly bulletToken: Token.OrderedListItemBullet;
+    readonly start: number;
+    readonly tight: boolean;
+    readonly padding: number;
 }
 
-export abstract class ListItemBase extends Block {
-    public constructor(parameters?: IListItemBaseParameters) {
+export interface IUnorderedListMarker {
+    readonly markerOffset: number;
+    readonly ordered: false;
+    readonly bulletToken: Token.UnorderedListItemBullet;
+    readonly tight: boolean;
+    readonly padding: number;
+}
+
+export type ListMarker =
+    | IOrderedListMarker
+    | IUnorderedListMarker
+    ;
+
+export interface IListItemBaseParameters extends IBlockParameters, IBlockContainerParameters {
+    readonly listMarker: ListMarker;
+}
+
+export interface IListItemContainer extends Content {
+    isListItemContainer(): true;
+    readonly firstChildListItem: ListItemBase | undefined;
+    readonly lastChildListItem: ListItemBase | undefined;
+}
+
+export interface IListItemContainerParameters {
+    content?: ListItemBase | ReadonlyArray<ListItemBase>;
+}
+
+export abstract class ListItemBase extends Block implements IBlockContainer {
+    private _listMarker: ListMarker;
+    
+    public constructor(parameters: IListItemBaseParameters) {
         super(parameters);
+        ContentUtils.appendContent(this, parameters && parameters.content);
+        this._listMarker = parameters.listMarker;
     }
 
     /**
@@ -33,7 +73,17 @@ export abstract class ListItemBase extends Block {
     /**
      * Gets the list marker for this list item.
      */
-    public abstract get listMarker(): IListMarker;
+    public get listMarker(): ListMarker {
+        return this._listMarker;
+    }
+
+    public set listMarker(value: ListMarker) {
+        if (value !== this._listMarker) {
+            this.beforeChange();
+            this._listMarker = value;
+            this.afterChange();
+        }
+    }
 
     /** @override */
     public isListItem(): true {

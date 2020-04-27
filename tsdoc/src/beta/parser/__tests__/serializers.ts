@@ -1,16 +1,14 @@
+import PrettyFormat = require("pretty-format");
 import { SyntaxKind } from "../../nodes/SyntaxKind";
 import { Token } from "../Token";
 import { Node } from "../../nodes/Node";
 import { MarkdownCodeBlock } from "../../nodes/MarkdownCodeBlock";
 import { MarkdownHeading } from "../../nodes/MarkdownHeading";
 import { MarkdownList } from "../../nodes/MarkdownList";
-
-import PrettyFormat = require("pretty-format");
 import { Document } from "../../nodes/Document";
 import { MarkdownCodeSpan } from "../../nodes/MarkdownCodeSpan";
 import { Run } from "../../nodes/Run";
 import { MarkdownHtmlInline } from "../../nodes/MarkdownHtmlInline";
-import { MarkdownAutoLink } from "../../nodes/MarkdownAutoLink";
 import { MarkdownLinkLabel } from "../../nodes/MarkdownLinkLabel";
 import { MarkdownLinkTitle } from "../../nodes/MarkdownLinkTitle";
 import { MarkdownLinkDestination } from "../../nodes/MarkdownLinkDestination";
@@ -276,11 +274,7 @@ function markdownHeadingToSnapshot(node: MarkdownHeading): object {
 
 function markdownListToSnapshot(node: MarkdownList): object {
     return {
-        ...nodeToSnapshotCore(node),
-        listMarker: {
-            ...node.listMarker,
-            bulletToken: SnapshotSerializer.enumValue(node.listMarker.bulletToken, Token)
-        }
+        ...nodeToSnapshotCore(node)
     };
 }
 
@@ -309,13 +303,6 @@ function markdownHtmlInlineToSnapshot(node: MarkdownHtmlInline): object {
     };
 }
 
-function markdownAutoLinkToSnapshot(node: MarkdownAutoLink): object {
-    return {
-        ...nodeToSnapshotCore(node),
-        href: node.destination
-    };
-}
-
 function markdownLinkLabelToSnapshot(node: MarkdownLinkLabel): object {
     return {
         ...nodeToSnapshotCore(node),
@@ -335,7 +322,7 @@ function markdownLinkTitleToSnapshot(node: MarkdownLinkTitle): object {
 function markdownLinkDestinationToSnapshot(node: MarkdownLinkDestination): object {
     return {
         ...nodeToSnapshotCore(node),
-        href: node.href,
+        href: node.text,
         bracketed: node.bracketed
     };
 }
@@ -395,7 +382,6 @@ export function nodeToSnapshot(node: Node): object {
         case SyntaxKind.MarkdownListItem: return markdownListItemToSnapshot(node as MarkdownListItem);
         case SyntaxKind.MarkdownCodeSpan: return markdownCodeSpanToSnapshot(node as MarkdownCodeSpan);
         case SyntaxKind.MarkdownHtmlInline: return markdownHtmlInlineToSnapshot(node as MarkdownHtmlInline);
-        case SyntaxKind.MarkdownAutoLink: return markdownAutoLinkToSnapshot(node as MarkdownAutoLink);
         case SyntaxKind.MarkdownLinkLabel: return markdownLinkLabelToSnapshot(node as MarkdownLinkLabel);
         case SyntaxKind.MarkdownLinkTitle: return markdownLinkTitleToSnapshot(node as MarkdownLinkTitle);
         case SyntaxKind.MarkdownLinkDestination: return markdownLinkDestinationToSnapshot(node as MarkdownLinkDestination);

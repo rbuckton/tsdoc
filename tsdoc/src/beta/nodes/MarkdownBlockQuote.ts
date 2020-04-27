@@ -1,13 +1,15 @@
 import { SyntaxKind } from "./SyntaxKind";
-import { Block, IBlockParameters } from "./Block";
+import { Block, IBlockParameters, IBlockContainerParameters, IBlockContainer } from "./Block";
 import { TSDocPrinter } from "../parser/TSDocPrinter";
+import { ContentUtils } from "./ContentUtils";
 
-export interface IMarkdownBlockQuoteParameters extends IBlockParameters {
+export interface IMarkdownBlockQuoteParameters extends IBlockParameters, IBlockContainerParameters {
 }
 
-export class MarkdownBlockQuote extends Block {
+export class MarkdownBlockQuote extends Block implements IBlockContainer {
     public constructor(parameters?: IMarkdownBlockQuoteParameters) {
         super(parameters);
+        ContentUtils.appendContent(this, parameters && parameters.content);
     }
 
     /** @override */

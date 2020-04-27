@@ -3,17 +3,17 @@ import { Syntax, ISyntaxParameters } from "./Syntax";
 import { TSDocPrinter } from "../parser/TSDocPrinter";
 
 export interface IMarkdownLinkDestinationParameters extends ISyntaxParameters {
-    href?: string;
+    text?: string;
     bracketed?: boolean;
 }
 
 export class MarkdownLinkDestination extends Syntax {
-    private _href: string | undefined;
+    private _text: string | undefined;
     private _bracketed: boolean | undefined;
 
     public constructor(parameters?: IMarkdownLinkDestinationParameters) {
         super(parameters);
-        this._href = parameters && parameters.href;
+        this._text = parameters && parameters.text;
         this._bracketed = parameters && parameters.bracketed;
     }
 
@@ -21,14 +21,14 @@ export class MarkdownLinkDestination extends Syntax {
         return SyntaxKind.MarkdownLinkDestination;
     }
 
-    public get href(): string {
-        return this._href || '';
+    public get text(): string {
+        return this._text || '';
     }
 
-    public set href(value: string) {
-        if (this.href !== value) {
+    public set text(value: string) {
+        if (this.text !== value) {
             this.beforeChange();
-            this._href = value;
+            this._text = value;
             this.afterChange();
         }
     }
@@ -47,6 +47,6 @@ export class MarkdownLinkDestination extends Syntax {
 
     /** @override */
     protected print(printer: TSDocPrinter): void {
-        printer.write(this.href);
+        printer.write(this.text);
     }
 }

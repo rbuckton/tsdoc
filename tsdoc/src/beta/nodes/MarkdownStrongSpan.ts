@@ -1,18 +1,20 @@
 import { SyntaxKind } from "./SyntaxKind";
-import { Inline, IInlineParameters } from "./Inline";
+import { Inline, IInlineParameters, IInlineContainer, IInlineContainerParameters } from "./Inline";
 import { Token } from "../parser/Token";
 import { TSDocPrinter } from "../parser/TSDocPrinter";
+import { ContentUtils } from "./ContentUtils";
 
-export interface IMarkdownStrongSpanParameters extends IInlineParameters {
+export interface IMarkdownStrongSpanParameters extends IInlineParameters, IInlineContainerParameters {
     emphasisToken?: Token.EmphasisToken;
 }
 
-export class MarkdownStrongSpan extends Inline {
+export class MarkdownStrongSpan extends Inline implements IInlineContainer {
     private _emphasisToken: Token.EmphasisToken | undefined;
 
     public constructor(parameters?: IMarkdownStrongSpanParameters) {
         super(parameters);
         this._emphasisToken = parameters && parameters.emphasisToken;
+        ContentUtils.appendContent(this, parameters && parameters.content);
     }
 
     /** @override */
@@ -22,6 +24,15 @@ export class MarkdownStrongSpan extends Inline {
 
     public get emphasisToken(): Token.EmphasisToken {
         return this._emphasisToken || Token.AsteriskEmphasisToken;
+    }
+
+    public set emphasisToken(value: Token.EmphasisToken) {
+        if (!Token.isEmphasisToken(value)) throw new RangeError('Argument out of range: value');
+        if (this._emphasisToken !== value) {
+            this.beforeChange();
+            this._emphasisToken = value;
+            this.afterChange();
+        }
     }
 
     /** @override */

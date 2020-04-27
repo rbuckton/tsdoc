@@ -1,14 +1,17 @@
 import { SyntaxKind } from "./SyntaxKind";
 import { TSDocPrinter } from "../parser/TSDocPrinter";
 
-// type-only imports
+// TODO: These should be type-only imports, but that requires TS 3.8
 type Document = import("./Document").Document;
 type Syntax = import("./Syntax").Syntax;
 type Content = import("./Content").Content;
 type Block = import("./Block").Block;
+type IBlockContainer = import("./Block").IBlockParameters;
 type Inline = import("./Inline").Inline;
+type IInlineContainer = import("./Inline").IInlineContainer;
 type ListBase = import("./ListBase").ListBase;
 type ListItemBase = import("./ListItemBase").ListItemBase;
+type IListItemContainer = import("./ListItemBase").IListItemContainer;
 type LinkBase = import("./LinkBase").LinkBase;
 
 declare const assignabilityHack: unique symbol;
@@ -22,12 +25,30 @@ export interface INodeParameters {
 }
 
 export const enum DocumentPosition {
-    Unrelated,
-    Preceding,
-    Contains,
+    /**
+     * Indicates the provided node is the same as this node.
+     */
     Same,
-    ContainedBy,
+    /**
+     * Indicates the nodes do not belong to the same document hierarchy.
+     */
+    Unrelated,
+    /**
+     * Indicates the provided node precedes (and does not contain) this node in the document hierarchy.
+     */
+    Preceding,
+    /**
+     * Indicates the provided node follows (and is not contained by) this node in the document hierarchy.
+     */
     Following,
+    /**
+     * Indicates the provided node contains (and therefore also precedes) this node in the document hierarchy.
+     */
+    Contains,
+    /**
+     * Indicates the provided node is contained by (and therefore also follows) this node in the document hierarchy.
+     */
+    ContainedBy,
 }
 
 export abstract class Node {
@@ -50,6 +71,7 @@ export abstract class Node {
     public get pos(): number {
         return this._pos;
     }
+
     public set pos(value: number) {
         this._pos = value;
     }
@@ -60,6 +82,7 @@ export abstract class Node {
     public get end(): number {
         return this._end;
     }
+
     public set end(value: number) {
         this._end = value;
     }
@@ -82,7 +105,7 @@ export abstract class Node {
      * Indicates whether this node can contain `Block` nodes.
      * @virtual
      */
-    public isBlockContainer(): boolean {
+    public isBlockContainer(): this is IBlockContainer {
         return false;
     }
 
@@ -90,7 +113,7 @@ export abstract class Node {
      * Indicates whether this node can contain `ListItemBase` nodes.
      * @virtual
      */
-    public isListItemContainer(): boolean {
+    public isListItemContainer(): this is IListItemContainer {
         return false;
     }
 
@@ -98,7 +121,7 @@ export abstract class Node {
      * Indicates whether this node can contain `Inline` nodes.
      * @virtual
      */
-    public isInlineContainer(): boolean {
+    public isInlineContainer(): this is IInlineContainer {
         return false;
     }
 
@@ -189,9 +212,12 @@ export abstract class Node {
         return false;
     }
 
-    /** @virtual */
+    /**
+     * Remove this node from its parent.
+     * @virtual
+     */
     public removeNode(): void {
-        this.setParent(undefined);
+        this._setParent(undefined);
     }
 
     /**
@@ -206,60 +232,73 @@ export abstract class Node {
         return false;
     }
 
-    private static _compareDocumentPositions(node1: Node, node2: Node): DocumentPosition {
-        if (node1 === node2) return DocumentPosition.Same;
-        if (node1.contains(node2)) return DocumentPosition.Contains;
-        if (node2.contains(node1)) return DocumentPosition.ContainedBy;
-
-        let context1: Node = node1;
-        let context1Parent: Node | undefined = context1.parent;
-        while (context1Parent && !context1Parent.contains(node2)) {
-            context1 = context1Parent;
-            context1Parent = context1.parent;
-        }
-
-        if (!context1Parent) return DocumentPosition.Unrelated;
-
-        let context2: Node = node2;
-        let context2Parent: Node | undefined = context2.parent;
-        while (context2Parent && !context2Parent.contains(node1)) {
-            context2 = context2Parent;
-            context2Parent = context2.parent;
-        }
-
-        if (!context2Parent) return DocumentPosition.Unrelated;
-
-        if (context1Parent !== context2Parent) {
-            if (context1Parent.contains(context2Parent)) {
-                while (context2Parent && context2Parent !== context1Parent) {
-                    context2 = context2Parent;
-                    context2Parent = context2.parent;
-                }
-            }
-            else if (context2Parent.contains(context1Parent)) {
-                while (context1Parent && context1Parent !== context2Parent) {
-                    context1 = context1Parent;
-                    context1Parent = context1.parent;
-                }
-            }
-        }
-
-        if (!context1Parent || !context2Parent || context1Parent !== context2Parent) {
-            return DocumentPosition.Unrelated;
-        }
-
-        return context1Parent.forEachNode(node => {
-            if (node === context1) return DocumentPosition.Preceding;
-            if (node === context2) return DocumentPosition.Following;
-            return undefined;
-        }) || DocumentPosition.Unrelated;
-    }
-
     /**
      * Determines the position of `other` relative to this node.
      */
     public compareDocumentPosition(other: Node): DocumentPosition {
-        return Node._compareDocumentPositions(other, this);
+        if (other === this) return DocumentPosition.Same;
+        if (other.contains(this)) return DocumentPosition.Contains;
+        if (this.contains(other)) return DocumentPosition.ContainedBy;
+
+        // Find the nearest ancestor to `other` that contains `this`.
+        let otherContext: Node = other;
+        let otherAncestor: Node | undefined = otherContext.parent;
+        while (otherAncestor && !otherAncestor.contains(this)) {
+            otherContext = otherAncestor;
+            otherAncestor = otherContext.parent;
+        }
+
+        // If no ancestor of `other` contained `this` then `other` and `this` aren't
+        // part of the same tree.
+        if (!otherAncestor) return DocumentPosition.Unrelated;
+
+        // Find the nearest ancestor to `this` that contains `other`.
+        let thisContext: Node = this;
+        let thisAncestor: Node | undefined = thisContext.parent;
+        while (thisAncestor && !thisAncestor.contains(other)) {
+            thisContext = thisAncestor;
+            thisAncestor = thisContext.parent;
+        }
+
+        // If no ancestor of `this` contained `other` then `other` and `this` aren't
+        // part of the same tree.
+        if (!thisAncestor) return DocumentPosition.Unrelated;
+
+        // If the containing ancestors on each side aren't the same
+        // we need to ascend the ancestors of the side that is deeper
+        // in the tre until we find a context node that is a sibling of the
+        // context node of the ancestor that is higher in the tree.
+        if (otherAncestor !== thisAncestor) {
+            if (otherAncestor.contains(thisAncestor)) {
+                // The ancestor of `other` constains the ancestor of `this`
+                // so we walk up the tree on `this`'s side until they meet.
+                while (thisAncestor && thisAncestor !== otherAncestor) {
+                    thisContext = thisAncestor;
+                    thisAncestor = thisContext.parent;
+                }
+            } else if (thisAncestor.contains(otherAncestor)) {
+                // The ancestor of `this` constains the ancestor of `other`
+                // so we walk up the tree on `other`'s side until they meet.
+                while (otherAncestor && otherAncestor !== thisAncestor) {
+                    otherContext = otherAncestor;
+                    otherAncestor = otherContext.parent;
+                }
+            }
+        }
+
+        // If we still haven't found a common ancestor then `other` and `this`
+        // aren't part of the same tree.
+        if (!otherAncestor || !thisAncestor || otherAncestor !== thisAncestor) {
+            return DocumentPosition.Unrelated;
+        }
+
+        // Iterate each node of the common ancestor in document order to determine
+        // which context node comes first.
+        return otherAncestor.forEachNode(node => {
+            if (node === otherContext) return DocumentPosition.Preceding;
+            if (node === thisContext) return DocumentPosition.Following;
+            return undefined;
+        }) || DocumentPosition.Unrelated;
     }
 
     /**
@@ -302,7 +341,7 @@ export abstract class Node {
                 throw new TypeError("Node was not a syntax element.");
             }
             node.removeNode();
-            node.setParent(this);
+            node._setParent(this);
         }
     }
 
@@ -326,57 +365,107 @@ export abstract class Node {
         }
     }
 
-    /** @virtual */
+    /**
+     * Gets the {@link Syntax} nodes for this node.
+     * @virtual
+     */
     public getSyntax(): ReadonlyArray<Syntax> {
         return [];
     }
 
-    protected static getVersion(node: Node): number {
+    /**
+     * This method supports the tsdoc infrastructure and is not intended to be used in user code.
+     * @internal
+     */
+    protected static _getVersion(node: Node): number {
         return node._version;
     }
 
-    /** @virtual */
+    /**
+     * When overridden in a derived class, handles operations that should trigger when this node's
+     * position has changed within the document hierarchy.
+     * @virtual
+     */
     protected onInvalidated(): void {}
 
-    protected invalidate(): void {
+    private _invalidate(): void {
         this._version++;
         this.onInvalidated();
-        if (this.parent) {
-            this.parent.invalidate();
+        if (this._parent) {
+            this._parent._invalidate();
         }
     }
 
-    /** @virtual */
+    /**
+     * When overridden in a derived class, handles operations that should trigger when this node's
+     * parent is about to change.
+     * @virtual
+     */
     protected onParentChanging(): void {}
-    /** @virtual */
+
+    /**
+     * When overridden in a derived class, handles operations that should trigger when this node's
+     * parent has changed.
+     * @virtual
+     */
     protected onParentChanged(): void {}
-    /** @virtual */
+
+    /**
+     * When overridden in a derived class, handles operations that should trigger when a child node
+     * (either {@link Syntax} or {@link Content} has been attached to this node.
+     * @virtual
+     */
     protected onChildAttached(node: Node) {}
-    /** @virtual */
+
+    /**
+     * When overridden in a derived class, handles operations that should trigger when a child node
+     * (either {@link Syntax} or {@link Content} has been detached to this node.
+     * @virtual
+     */
     protected onChildDetached(node: Node) {}
 
     /**
      * This method supports the tsdoc infrastructure and is not intended to be used in user code.
+     * @internal
      */
-    protected setParent(newParent: Node | undefined): void {
+    protected _setParent(newParent: Node | undefined): void {
         if (this._parent !== newParent) {
             this.onParentChanging();
             if (this._parent) this._parent.onChildDetached(this);
             this._parent = newParent;
             if (this._parent) this._parent.onChildAttached(this);
-            this.invalidate();
+            this._invalidate();
             this.onParentChanged();
-            this.setOwnerDocument(newParent && (newParent.isDocument() ? newParent : newParent._ownerDocument));
+            this._setOwnerDocument(newParent && (newParent.isDocument() ? newParent : newParent._ownerDocument));
         }
     }
 
-    /** @virtual */
+    /**
+     * When overridden in a derived class, handles operations that should trigger when
+     * this node is about to be attached or detached from a {@link Document}.
+     * @virtual
+     */
     protected onOwnerDocumentChanging(): void {}
-    /** @virtual */
+
+    /**
+     * When overridden in a derived class, handles operations that should trigger when
+     * this node has been attached or detached from a {@link Document}.
+     * @virtual
+     */
     protected onOwnerDocumentChanged(): void {}
-    /** @virtual */
+
+    /**
+     * This method supports the tsdoc infrastructure and is not intended to be used in user code.
+     * @internal
+     * @virtual
+     */
     protected onNodeAttached(this: Document, node: Node) {}
-    /** @virtual */
+
+    /**
+     * This method supports the tsdoc infrastructure and is not intended to be used in user code.
+     * @internal
+     * @virtual
+     */
     protected onNodeDetached(this: Document, node: Node) {}
 
     private _raiseOnNodeAttached(this: Document, node: Node) {
@@ -389,21 +478,31 @@ export abstract class Node {
 
     /**
      * This method supports the tsdoc infrastructure and is not intended to be used in user code.
+     * @internal
      */
-    protected setOwnerDocument(ownerDocument: Document | undefined): void {
+    protected _setOwnerDocument(ownerDocument: Document | undefined): void {
         if (this.ownerDocument !== ownerDocument) {
             this.onOwnerDocumentChanging();
             if (this._ownerDocument) this._ownerDocument._raiseOnNodeDetached(this);
             this._ownerDocument = ownerDocument;
             if (this._ownerDocument) this._ownerDocument._raiseOnNodeAttached(this);
             this.onOwnerDocumentChanged();
-            this.forEachNode(node => node.setOwnerDocument(ownerDocument));
+            this.forEachNode(node => node._setOwnerDocument(ownerDocument));
         }
     }
 
-    /** @virtual */
+    /**
+     * This method supports the tsdoc infrastructure and is not intended to be used in user code.
+     * @internal
+     * @virtual
+     */
     protected onNodeChanging(this: Document, node: Node) {}
-    /** @virtual */
+
+    /**
+     * This method supports the tsdoc infrastructure and is not intended to be used in user code.
+     * @internal
+     * @virtual
+     */
     protected onNodeChanged(this: Document, node: Node) {}
 
     private _raiseOnNodeChanging(this: Document, node: Node) {
@@ -414,23 +513,33 @@ export abstract class Node {
         this.onNodeChanged(node);
     }
 
+    /**
+     * Notifies the owner {@link Document} of the this node that a property of this node is about to change.
+     */
     protected beforeChange(): void {
         if (this._ownerDocument) {
             this._ownerDocument._raiseOnNodeChanging(this);
         }
     }
 
+    /**
+     * Notifies the owner {@link Document} of the this node that a property of this node has changed.
+     */
     protected afterChange(): void {
         if (this._ownerDocument) {
             this._ownerDocument._raiseOnNodeChanged(this);
         }
     }
 
-    protected print?(printer: TSDocPrinter): void;
-
-    protected printNode(printer: TSDocPrinter, node: Node) {
+    /**
+     * This method supports the tsdoc infrastructure and is not intended to be used in user code.
+     * @internal
+     */
+    protected static _printNode(printer: TSDocPrinter, node: Node): void {
         if (node.print) {
             node.print(printer);
         }
     }
+
+    protected print?(printer: TSDocPrinter): void;
 }

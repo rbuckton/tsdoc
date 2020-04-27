@@ -3,8 +3,8 @@ import { BlockParser } from "../BlockParser";
 import { SyntaxKind } from "../../nodes/SyntaxKind";
 import { Node } from "../../nodes/Node";
 import { MarkdownList } from "../../nodes/MarkdownList";
-import { MarkdownListItem } from "../../nodes/MarkdownListItem";
 import { Block } from "../../nodes/Block";
+import { ListItemBase } from "../../nodes/ListItemBase";
 
 export namespace MarkdownListParser {
     export const kind: SyntaxKind.MarkdownList = SyntaxKind.MarkdownList;
@@ -20,11 +20,12 @@ export namespace MarkdownListParser {
     }
 
     export function finish(parser: BlockParser, block: MarkdownList): void {
-        let item: Node | undefined = block.firstChild;
-        while (item instanceof MarkdownListItem) {
+        let item: ListItemBase | undefined = block.firstChildListItem;
+        let tight: boolean = true;
+        while (item) {
             // check for non-final list item ending with blank line:
             if (parser.endsWithBlankLine(item) && item.nextSibling) {
-                block.listMarker.tight = false;
+                tight = false;
                 break;
             }
 
@@ -33,12 +34,20 @@ export namespace MarkdownListParser {
             let child: Node | undefined = item.firstChild;
             while (child instanceof Block) {
                 if (parser.endsWithBlankLine(child) && (item.nextSibling || child.nextSibling)) {
-                    block.listMarker.tight = false;
+                    tight = false;
                     break;
                 }
                 child = child.nextSibling;
             }
-            item = item.nextSibling;
+            item = item.nextSiblingListItem;
+        }
+
+        item = block.firstChildListItem;
+        while (item) {
+            if (item.listMarker.tight !== tight) {
+                item.listMarker = {...item.listMarker, tight };
+            }
+            item = item.nextSiblingListItem;
         }
     }
 }

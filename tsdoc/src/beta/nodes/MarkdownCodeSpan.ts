@@ -29,7 +29,7 @@ export class MarkdownCodeSpan extends Inline {
     }
 
     public set backtickCount(value: number) {
-        if (value < 1) throw new RangeError("Argument out of range: value");
+        if (value < 1) throw new RangeError('Argument out of range: value');
         if (this.backtickCount !== value) {
             this.beforeChange();
             this._backtickCount = value;
@@ -38,7 +38,7 @@ export class MarkdownCodeSpan extends Inline {
     }
 
     public get text(): string {
-        return this._text || "";
+        return this._text || '';
     }
 
     public set text(value: string) {

@@ -63,7 +63,7 @@ export abstract class Content extends Node {
     public appendChild(child: Content): boolean {
         if (this.canHaveChild(child) && child.canHaveParent(this) && child.isContent()) {
             child.removeNode();
-            child.setParent(this);
+            child._setParent(this);
             if (this._lastChild) {
                 child._previousSibling = this._lastChild;
                 this._lastChild = this._lastChild._nextSibling = child;
@@ -106,7 +106,7 @@ export abstract class Content extends Node {
         }
         this._previousSibling = newSibling;
         newSibling._nextSibling = this;
-        newSibling.setParent(this.parent);
+        newSibling._setParent(this.parent);
         if (!newSibling._previousSibling) {
             this.parent._firstChild = newSibling;
         }
@@ -132,7 +132,7 @@ export abstract class Content extends Node {
         }
         this._nextSibling = newSibling;
         newSibling._previousSibling = this;
-        newSibling.setParent(this.parent);
+        newSibling._setParent(this.parent);
         if (!newSibling._nextSibling) {
             this.parent._lastChild = newSibling;
         }
@@ -169,7 +169,7 @@ export abstract class Content extends Node {
         }
         this._previousSibling = undefined;
         this._nextSibling = undefined;
-        this.setParent(undefined);
+        this._setParent(undefined);
     }
 
     /**

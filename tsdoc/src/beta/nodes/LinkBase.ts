@@ -1,4 +1,4 @@
-import { Inline, IInlineParameters } from "./Inline";
+import { Inline, IInlineParameters, IInlineContainer } from "./Inline";
 import { MarkdownLinkDestination } from "./MarkdownLinkDestination";
 import { MarkdownLinkTitle } from "./MarkdownLinkTitle";
 import { MarkdownLinkLabel } from "./MarkdownLinkLabel";
@@ -7,14 +7,16 @@ import { Node } from "./Node";
 import { MarkdownUtils } from "../parser/utils/MarkdownUtils";
 import { MarkdownLinkReference } from "./MarkdownLinkReference";
 import { TSDocPrinter } from "../parser/TSDocPrinter";
+import { ContentUtils } from "./ContentUtils";
 
 export interface ILinkBaseParameters extends IInlineParameters {
+    content?: Inline | ReadonlyArray<Inline> | string;
     destination?: MarkdownLinkDestination | string;
     title?: MarkdownLinkTitle | string;
     label?: MarkdownLinkLabel | string;
 }
 
-export abstract class LinkBase extends Inline {
+export abstract class LinkBase extends Inline implements IInlineContainer {
     private _destinationSyntax: MarkdownLinkDestination | undefined;
     private _titleSyntax: MarkdownLinkTitle | undefined;
     private _labelSyntax: MarkdownLinkLabel | undefined;
@@ -23,15 +25,9 @@ export abstract class LinkBase extends Inline {
 
     public constructor(parameters: ILinkBaseParameters = {}) {
         super(parameters);
-        if (parameters.destination !== undefined && parameters.label !== undefined) {
-            throw new Error('A link cannot specify both a destination and a label');
-        }
-        if (parameters.title !== undefined && parameters.label !== undefined) {
-            throw new Error('A link cannot specify both a title and a label');
-        }
         this.attachSyntax(this._destinationSyntax =
             parameters.destination instanceof MarkdownLinkDestination ? parameters.destination :
-            parameters.destination !== undefined ? new MarkdownLinkDestination({ href: parameters.destination }) :
+            parameters.destination !== undefined ? new MarkdownLinkDestination({ text: parameters.destination }) :
             undefined);
         this.attachSyntax(this._titleSyntax =
             parameters.title instanceof MarkdownLinkTitle ? parameters.title :
@@ -41,17 +37,18 @@ export abstract class LinkBase extends Inline {
             parameters.label instanceof MarkdownLinkLabel ? parameters.label :
             parameters.label !== undefined ? new MarkdownLinkLabel({ text: parameters.label }) :
             undefined);
+        ContentUtils.appendContent(this, parameters.content);
     }
 
     public get destination(): string {
-        if (this._destinationSyntax) return this._destinationSyntax.href;
+        if (this._destinationSyntax) return this._destinationSyntax.text;
         const linkReference: MarkdownLinkReference | undefined = this._resolveLinkReference();
         return linkReference ? linkReference.destination : "";
     }
 
     public set destination(value: string) {
         this._applyLinkReference();
-        this._ensureDestinationSyntax().href = value;
+        this._ensureDestinationSyntax().text = value;
     }
 
     public get title(): string | undefined {
@@ -161,7 +158,7 @@ export abstract class LinkBase extends Inline {
     }
 
     private _maybeInvalidateResolvedReference(): void {
-        if (this._resolvedReference && (!this.ownerDocument || !this._labelSyntax || Node.getVersion(this.ownerDocument) !== this._documentVersion)) {
+        if (this._resolvedReference && (!this.ownerDocument || !this._labelSyntax || Node._getVersion(this.ownerDocument) !== this._documentVersion)) {
             this._resolvedReference = undefined;
             this._documentVersion = -1;
         }
@@ -178,7 +175,7 @@ export abstract class LinkBase extends Inline {
                 const linkReference: MarkdownLinkReference | undefined = this.ownerDocument.referenceMap.get(refLabel);
                 if (linkReference) {
                     this._resolvedReference = linkReference;
-                    this._documentVersion = Node.getVersion(this.ownerDocument);
+                    this._documentVersion = Node._getVersion(this.ownerDocument);
                 }
             }
         }
@@ -188,7 +185,7 @@ export abstract class LinkBase extends Inline {
     private _applyLinkReference(): void {
         const linkReference: MarkdownLinkReference | undefined = this._resolveLinkReference();
         if (linkReference) {
-            this._ensureDestinationSyntax().href = linkReference.destination;
+            this._ensureDestinationSyntax().text = linkReference.destination;
             if (linkReference.title !== undefined) {
                 this._ensureTitleSyntax().text = linkReference.title;
             }
@@ -202,14 +199,14 @@ export abstract class LinkBase extends Inline {
         this.printLinkContent(printer);
         if (this._destinationSyntax) {
             printer.write('(');
-            this.printNode(printer, this._destinationSyntax);
+            Node._printNode(printer, this._destinationSyntax);
             if (this._titleSyntax) {
                 printer.write(' ');
-                this.printNode(printer, this._titleSyntax);
+                Node._printNode(printer, this._titleSyntax);
             }
             printer.write(')');
         } else if (this._labelSyntax) {
-            this.printNode(printer, this._labelSyntax);
+            Node._printNode(printer, this._labelSyntax);
         }
     }
 

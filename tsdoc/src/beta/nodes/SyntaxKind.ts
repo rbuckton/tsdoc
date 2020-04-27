@@ -12,7 +12,6 @@ export enum SyntaxKind {
     DocLinkTag,                         // {@link url|alt}
     DocInheritDocTag,                   // {@inheritDoc namepath}
 
-
     // HTML
     HtmlElement,                        // <html></html>
     HtmlSelfClosingElement,             // <img />
@@ -38,9 +37,8 @@ export enum SyntaxKind {
     MarkdownCodeSpan,                   // `a` (or) `` a ``
     MarkdownEmSpan,                     // *a* (or) _a_
     MarkdownStrongSpan,                 // **a** (or) __a__
-    MarkdownLink,                       // [text](/url "title") (or) [label] (or) [label][] (or) [text][label]
+    MarkdownLink,                       // [text](/url "title") (or) [label] (or) [label][] (or) [text][label] (or) <http://foo.bar> (or) <foo@bar.com>
     MarkdownImage,                      // ![alt](/url "title") (or) ![label] (or) ![label][] (or) ![text][label]
-    MarkdownAutoLink,                   // <http://foo.bar> (or) <foo@bar.com>
     MarkdownHtmlInline,                 // <img> (or) <b>
     MarkdownHardBreak,                  // words  \nmore words (or) words\\nmore words
     MarkdownSoftBreak,                  // words\nmore words
@@ -51,7 +49,4 @@ export enum SyntaxKind {
 
     // Other Inlines
     Run,
-
-    
-    
 }
