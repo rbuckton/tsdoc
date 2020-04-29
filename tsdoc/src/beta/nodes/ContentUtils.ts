@@ -3,16 +3,21 @@ import { Inline, IInlineContainer, IInlineContainerParameters } from "./Inline";
 import { Run } from "./Run";
 import { Block, IBlockContainer, IBlockContainerParameters } from "./Block";
 import { MarkdownParagraph } from "./MarkdownParagraph";
-import { ListMarker, ListItemBase, IListItemContainer, IListItemContainerParameters } from "./ListItemBase";
+import { ListItemBase, IListItemContainer, IListItemContainerParameters } from "./ListItemBase";
+import { ListMarker } from "./MarkdownListItem";
 import { Token } from "../parser/Token";
 import { MarkdownListItem } from "./MarkdownListItem";
 import { MarkdownList } from "./MarkdownList";
+import { ITableRowContainer, ITableRowContainerParameters, TableRowBase } from "./TableRowBase";
+import { ITableCellContainer, ITableCellContainerParameters, TableCellBase } from "./TableCellBase";
 
 export namespace ContentUtils {
     export function appendContent(node: Content & IBlockContainer, content: IBlockContainerParameters["content"]): boolean;
     export function appendContent(node: Content & IListItemContainer, content: IListItemContainerParameters["content"]): boolean;
     export function appendContent(node: Content & IInlineContainer, content: IInlineContainerParameters["content"]): boolean;
-    export function appendContent(node: Content, content: string | Inline | Block | ListItemBase | ReadonlyArray<string | Inline | Block | ListItemBase> | undefined): boolean {
+    export function appendContent(node: Content & ITableRowContainer, content: ITableRowContainerParameters["content"]): boolean;
+    export function appendContent(node: Content & ITableCellContainer, content: ITableCellContainerParameters["content"]): boolean;
+    export function appendContent(node: Content, content: string | Inline | Block | ListItemBase | TableRowBase | TableCellBase | ReadonlyArray<string | Inline | Block | ListItemBase | TableRowBase | TableCellBase> | undefined): boolean {
         return appendContentWorker(node, content);
     }
 
@@ -47,9 +52,14 @@ export namespace ContentUtils {
                 return true;
             }
             if (content.isInline()) {
-                if (node.isBlockContainer() || node.isListItemContainer()) {
+                if (node.isBlockContainer() ||
+                    node.isListItemContainer()) {
                     content = new MarkdownParagraph({ content });
                     continue;
+                }
+                if (node.isTableRowContainer() ||
+                    node.isTableCellContainer()) {
+                    throw new Error("Not yet implemented.");
                 }
             }
             if (content.isListItem()) {
@@ -58,10 +68,14 @@ export namespace ContentUtils {
                     continue;
                 }
             }
-            if (node.isListItemContainer()) {
-                const listMarker: ListMarker = node.firstChildListItem && node.firstChildListItem.listMarker || getDefaultListMarker();
+            if (node instanceof MarkdownList) {
+                const listMarker: ListMarker = node.firstChildMarkdownListItem && node.firstChildMarkdownListItem.listMarker || getDefaultListMarker();
                 content = new MarkdownListItem({ listMarker, content });
                 continue;
+            }
+            if (node.isTableRowContainer() ||
+                node.isTableCellContainer()) {
+                throw new Error("Not yet implemented.");
             }
             return false;
         }

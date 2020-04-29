@@ -7,7 +7,7 @@ import { Node } from "../../nodes/Node";
 import { MarkdownParagraph } from "../../nodes/MarkdownParagraph";
 import { Scanner } from "../Scanner";
 import { InlineParser } from "../InlineParser";
-import { IMapping } from "../Preprocessor";
+import { IMapping } from "../Mapper";
 
 export namespace MarkdownParagraphParser {
     export const kind: SyntaxKind.MarkdownParagraph = SyntaxKind.MarkdownParagraph;

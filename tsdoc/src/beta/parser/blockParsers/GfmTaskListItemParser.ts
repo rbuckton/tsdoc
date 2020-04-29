@@ -4,32 +4,25 @@ import { SyntaxKind } from "../../nodes/SyntaxKind";
 import { Token } from "../Token";
 import { IScannerState, Scanner } from "../Scanner";
 import { Node } from "../../nodes/Node";
-import { ListMarker, MarkdownListItem } from "../../nodes/MarkdownListItem";
-import { MarkdownList } from "../../nodes/MarkdownList";
+import { IGfmTaskListMarker, GfmTaskListItem } from "../../nodes/GfmTaskListItem";
+import { GfmTaskList } from "../../nodes/GfmTaskList";
 import { Preprocessor } from "../Preprocessor";
 import { UnicodeUtils } from "../utils/UnicodeUtils";
+import { GfmTaskListScanner } from "../scanners/GfmTaskListScanner";
 
-export namespace MarkdownListItemParser {
-    export const kind: SyntaxKind.MarkdownListItem = SyntaxKind.MarkdownListItem;
+export namespace GfmTaskListItemParser {
+    export const kind: SyntaxKind.GfmTaskListItem = SyntaxKind.GfmTaskListItem;
 
-    interface IMutableOrderedListMarker {
+    interface IMutableListMarker {
         markerOffset: number;
-        ordered: true;
-        bulletToken: Token.OrderedListItemBullet;
-        start: number;
-        tight: boolean;
-        padding: number;
-    }
-    
-    interface IMutableUnorderedListMarker {
-        markerOffset: number;
-        ordered: false;
+        task: true;
         bulletToken: Token.UnorderedListItemBullet;
+        checked: boolean;
         tight: boolean;
         padding: number;
     }
 
-    function parseListMarker(parser: BlockParser, container: Node): ListMarker | undefined {
+    function parseListMarker(parser: BlockParser, container: Node): IGfmTaskListMarker | undefined {
         if (parser.indent >= 4) {
             // an indent of 4+ is a code block
             return undefined;
@@ -37,40 +30,16 @@ export namespace MarkdownListItemParser {
 
         const scanner: Scanner = parser.scanner;
         const preprocessor: Preprocessor = scanner.preprocessor;
-        const token: Token = scanner.token();
+        const bulletToken: Token = scanner.token();
         const state: IScannerState = scanner.getState();
-        let marker: IMutableOrderedListMarker | IMutableUnorderedListMarker | undefined;
-        if (Token.isUnorderedListItemBullet(token)) {
-            marker = {
-                ordered: false,
-                bulletToken: token,
-                tight: true, // lists are tight by default
-                padding: 0,
-                markerOffset: parser.indent
-            };
-            scanner.scan();
-        } else if (token === Token.DecimalDigits) {
-            const tokenValue: string = scanner.getTokenValue();
-            if (tokenValue.length <= 9 && (container.kind !== SyntaxKind.MarkdownParagraph || tokenValue === "1")) {
-                const token: Token = scanner.scan();
-                if (Token.isOrderedListItemBullet(token)) {
-                    marker = {
-                        ordered: true,
-                        bulletToken: token,
-                        tight: true, // lists are tight by default.
-                        padding: 0,
-                        markerOffset: parser.indent,
-                        start: parseInt(tokenValue, 10)
-                    };
-                    scanner.scan();
-                }
-            }
-        }
 
-        if (!marker) {
+        // first we must parse an unordered list item bullet
+        if (!Token.isUnorderedListItemBullet(bulletToken)) {
             scanner.setState(state);
             return undefined;
         }
+
+        scanner.scan();
 
         // make sure we have spaces after
         if (scanner.token() !== Token.EndOfFileToken &&
@@ -91,7 +60,6 @@ export namespace MarkdownListItemParser {
         }
 
         // we've got a match! advance offset and calculate padding
-        parser.acceptIndent(); // to start of marker
         const markerWidth: number = scanner.startPos - state.startPos; // to end of marker
         const spacesStart: IScannerState = scanner.getState();
         if (!Token.isLineEnding(scanner.token())) {
@@ -101,6 +69,15 @@ export namespace MarkdownListItemParser {
             while (scanner.column - spacesStart.column < 5 &&
                 Token.isIndentCharacter(scanner.token()));
         }
+
+        const marker: IMutableListMarker = {
+            task: true,
+            checked: false,
+            bulletToken: bulletToken,
+            tight: true, // lists are tight by default
+            padding: 0,
+            markerOffset: parser.indent
+        };
 
         const blank: boolean = Token.isLineEnding(scanner.token());
         const spacesAfterMarker: number = scanner.column - spacesStart.column;
@@ -113,37 +90,49 @@ export namespace MarkdownListItemParser {
         } else {
             marker.padding = markerWidth + spacesAfterMarker;
         }
+
+        // next we must parse the task list marker
+        const taskListMarkerToken: Token = scanner.rescan(GfmTaskListScanner.rescanTaskListToken);
+        if (!Token.isTaskListMarkerToken(taskListMarkerToken)) {
+            scanner.setState(state);
+            return undefined;
+        }
+
+        scanner.scan();
+        scanner.scanWhitespace();
+        parser.acceptIndent(); // to start of marker
+        marker.checked = taskListMarkerToken === Token.CheckedTaskListMarkerToken;
         return marker;
     }
 
-    export function listsMatch(left: ListMarker, right: ListMarker): boolean {
-        return left.ordered === right.ordered
+    export function listsMatch(left: IGfmTaskListMarker, right: IGfmTaskListMarker): boolean {
+        return left.task === right.task
             && left.bulletToken === right.bulletToken;
     }
 
     export function tryStart(parser: BlockParser, container: Node): StartResult {
         // https://spec.commonmark.org/0.29/#list-items
         const scanner: Scanner = parser.scanner;
-        if ((parser.indent <= 3 || container.kind === SyntaxKind.MarkdownList) &&
-            (Token.isListItemBullet(scanner.token()) || scanner.token() === Token.DecimalDigits)) {
+        if ((parser.indent <= 3 || container.kind === SyntaxKind.GfmTaskList) &&
+            Token.isUnorderedListItemBullet(scanner.token())) {
             const pos: number = scanner.startPos;
-            const listMarker: ListMarker | undefined = parseListMarker(parser, container);
+            const listMarker: IGfmTaskListMarker | undefined = parseListMarker(parser, container);
             if (listMarker) {
                 parser.finishUnmatchedBlocks();
                 if (!parser.tip ||
-                    !(parser.tip instanceof MarkdownList) ||
-                    !(container instanceof MarkdownList) ||
-                    container.firstChildMarkdownListItem && !listsMatch(container.firstChildMarkdownListItem.listMarker, listMarker)) {
-                    parser.pushBlock(new MarkdownList(), pos);
+                    !(parser.tip instanceof GfmTaskList) ||
+                    !(container instanceof GfmTaskList) ||
+                    container.firstChildGfmTaskListItem && !listsMatch(container.firstChildGfmTaskListItem.listMarker, listMarker)) {
+                    parser.pushBlock(new GfmTaskList(), pos);
                 }
-                parser.pushBlock(new MarkdownListItem({ listMarker }), pos);
+                parser.pushBlock(new GfmTaskListItem({ listMarker }), pos);
                 return StartResult.Container;
             }
         }
         return StartResult.Unmatched;
     }
 
-    export function tryContinue(parser: BlockParser, block: MarkdownListItem): ContinueResult {
+    export function tryContinue(parser: BlockParser, block: GfmTaskListItem): ContinueResult {
         const scanner: Scanner = parser.scanner;
         if (parser.blank) {
             return block.firstChild ? ContinueResult.Matched : ContinueResult.Unmatched;
@@ -156,7 +145,7 @@ export namespace MarkdownListItemParser {
         return ContinueResult.Unmatched;
     }
 
-    export function finish(_parser: BlockParser, _block: MarkdownListItem): void {
-        // List items have no finish behavior.
+    export function finish(_parser: BlockParser, _block: GfmTaskListItem): void {
+        // Task list items have no finish behavior.
     }
 }

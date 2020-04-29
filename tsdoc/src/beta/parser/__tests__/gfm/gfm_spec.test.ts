@@ -37,7 +37,7 @@ function groupBySection(tests: Test[]): [string, Test[]][] {
     return sections;
 }
 
-const allTests: Test[] = require("../../../../../scripts/spec.json");
+const allTests: Test[] = require("../../../../../scripts/spec_gfm.json");
 for (const [section, tests] of groupBySection(allTests)) {
     (onlySections.has(section) ? describe.only :
         (skipAll || skipSections.has(section)) ? describe.skip :
@@ -45,10 +45,12 @@ for (const [section, tests] of groupBySection(allTests)) {
         for (const test of tests) {
             (onlyExamples.has(test.example) ? it.only :
                 skipExamples.has(test.example) ? it.skip :
-                it)(`<https://spec.commonmark.org/0.29/#example-${test.example}>`, () => {
-                const parser: BlockParser = new BlockParser(test.markdown);
+                it)(`<https://github.github.com/gfm/#example-${test.example}>`, () => {
+                const parser: BlockParser = new BlockParser(test.markdown, undefined, true);
                 const document: Document = parser.parse();
-                const emitter: HtmlEmitter = new HtmlEmitter();
+                const emitter: HtmlEmitter = new HtmlEmitter(
+                    tagName => !/^(title|textarea|style|xmp|iframe|noembed|noframes|script|plaintext)$/i.test(tagName)
+                );
                 emitter.emit(document);
                 const actual: string = emitter.toString();
                 expect(actual).toBe(test.html);

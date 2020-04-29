@@ -21,4 +21,5 @@ export interface IBlockSyntaxParser<T extends Block> {
     finish(parser: BlockParser, block: T): void;
     acceptLine?(parser: BlockParser, block: T): void;
     getContent?(parser: BlockParser, block: T): ContentWriter | undefined;
+    processInlines?(parser: BlockParser, block: T): void;
 }

@@ -1,6 +1,7 @@
 import { CharacterCodes } from "./CharacterCodes";
 import { UnicodeUtils } from "./utils/UnicodeUtils";
 import { ArrayUtils } from "./utils/ArrayUtils";
+import { Mapper, IMapping } from "./Mapper";
 
 export type PeekExpectation = ((codePoint: number | undefined) => boolean) | number | undefined;
 
@@ -17,19 +18,6 @@ export interface IPreprocessorState {
     readonly mapping: number;
 }
 
-export interface IMapping {
-    readonly pos: number;
-    readonly sourcePos: number;
-}
-
-function selectPos(mapping: IMapping): number {
-    return mapping.pos;
-}
-
-function selectSourcePos(mapping: IMapping): number {
-    return mapping.sourcePos;
-}
-
 /**
  * Preprocesses source text to convert UTF8 code units into Unicode code points, perform line-ending
  * normalization, and replace insecure characters.
@@ -42,29 +30,12 @@ export class Preprocessor {
     private _lineStarts: number[] = [0];
     private _charactersRead: number = 0;
     private _lastState: IPreprocessorState | undefined;
-    private _mappings: ReadonlyArray<IMapping> | undefined;
+    private _mapper: Mapper;
     private _mappingIndex: number = 0;
 
     public constructor(text: string, mappings?: ReadonlyArray<IMapping>) {
-        if (mappings) {
-            if (mappings.length === 0) {
-                mappings = undefined;
-            } else if (mappings[0].pos !== 0) {
-                throw new Error("Array must contain at least one item that starts at position 0.");
-            } else if (mappings.length > 1) {
-                let lastMapping: IMapping = mappings[0];
-                for (let i: number = 1; i < mappings.length; i++) {
-                    const mapping: IMapping = mappings[i];
-                    if (mapping.pos <= lastMapping.pos || mapping.sourcePos <= lastMapping.sourcePos) {
-                        throw new Error("Mappings are not properly ordered.");
-                    }
-                    lastMapping = mapping;
-                }
-            }
-        }
-
+        this._mapper = new Mapper(mappings);
         this._text = text;
-        this._mappings = mappings;
     }
 
     /**
@@ -78,7 +49,7 @@ export class Preprocessor {
      * Gets the current position within the text.
      */
     public get pos(): number {
-        return this._toSourcePos(this._pos, this._mappingIndex);
+        return this._mapper.toSourcePos(this._pos, this._mappingIndex);
     }
 
     /**
@@ -93,6 +64,10 @@ export class Preprocessor {
      */
     public get column(): number {
         return this._column;
+    }
+
+    public get mapper(): Mapper {
+        return this._mapper;
     }
 
     /**
@@ -144,8 +119,8 @@ export class Preprocessor {
      * CARRIAGE RETURN and CARRIAGE RETURN + LINE FEED are replaced with a single LINE FEED.
      */
     public slice(start?: number, end?: number): string {
-        if (start !== undefined && start >= 0) start = this._toPos(start)
-        if (end !== undefined && end >= 0) end = this._toPos(end);
+        if (start !== undefined && start >= 0) start = this._mapper.toPos(start, this._mappingIndex)
+        if (end !== undefined && end >= 0) end = this._mapper.toPos(end, this._mappingIndex);
         return this._text.slice(start, end)
             .replace(/\0/g, "\ufffd")
             .replace(/\r\n?/g, "\n");
@@ -194,9 +169,9 @@ export class Preprocessor {
             this._charactersRead = this._pos;
         }
 
-        if (this._mappings) {
-            while (this._mappingIndex < this._mappings.length - 1 &&
-                this._pos >= this._mappings[this._mappingIndex + 1].pos) {
+        if (this._mapper.mappings) {
+            while (this._mappingIndex < this._mapper.mappings.length - 1 &&
+                this._pos >= this._mapper.mappings[this._mappingIndex + 1].pos) {
                 this._mappingIndex++;
             }
         }
@@ -207,25 +182,31 @@ export class Preprocessor {
     /**
      * Advance the specified number of characters.
      */
-    public advance(count: number): void {
+    public advance(count: number): number {
+        let moved: number = 0;
         while (count > 0) {
             count--;
             const codePoint: number | undefined = this.read();
             if (codePoint === undefined) {
                 break;
             }
+            moved++;
         }
+        return moved;
     }
 
     /**
      * Retreat the specified number of characters.
      */
-    public retreat(count: number = 1): void {
+    public retreat(count: number = 1): number {
         if (count < 0) {
-            return;
+            return 0;
         }
 
-        this.setPos(Math.max(0, this._pos - count));
+        const newPos: number = Math.max(0, this._pos - count);
+        const moved: number = this._pos - newPos;
+        this.setPos(newPos);
+        return moved;
     }
 
     /**
@@ -235,8 +216,16 @@ export class Preprocessor {
         if (newPos < 0) {
             throw new Error("Argument out of range: newPos");
         }
-        
-        newPos = this._toPos(newPos);
+
+        newPos = this._mapper.toPos(newPos, this._mappingIndex);
+        return this._setPos(newPos);
+    }
+
+    private _setPos(newPos: number) {
+        if (newPos < 0) {
+            throw new Error("Argument out of range: newPos");
+        }
+
         if (newPos > this._charactersRead) {
             throw new Error("Argument out of range: newPos");
         }
@@ -281,14 +270,14 @@ export class Preprocessor {
             this._column--;
         }
 
-        if (this._mappings) {
+        if (this._mapper.mappings) {
             while (this._mappingIndex > 0 &&
-                this._pos < this._mappings[this._mappingIndex].pos) {
+                this._pos < this._mapper.mappings[this._mappingIndex].pos) {
                 this._mappingIndex--;
             }
 
-            while (this._mappingIndex < this._mappings.length - 1 &&
-                this._pos >= this._mappings[this._mappingIndex + 1].pos) {
+            while (this._mappingIndex < this._mapper.mappings.length - 1 &&
+                this._pos >= this._mapper.mappings[this._mappingIndex + 1].pos) {
                 this._mappingIndex++;
             }
         }
@@ -330,9 +319,15 @@ export class Preprocessor {
 
     private static _peek(preprocessor: Preprocessor, count: number): number | undefined {
         if (count > 0) {
-            preprocessor.advance(count);
+            const advanceCount: number = preprocessor.advance(count);
+            if (advanceCount < count) {
+                return undefined;
+            }
         } else if (count < 0) {
-            preprocessor.retreat(-count);
+            const retreatCount: number = preprocessor.retreat(-count);
+            if (retreatCount < -count) {
+                return undefined;
+            }
         }
         return preprocessor.read();
     }
@@ -343,13 +338,16 @@ export class Preprocessor {
      */
     public peekAt(pos: number): number | undefined {
         if (pos < 0) return undefined;
-        pos = this._toPos(pos);
+        pos = this._mapper.toPos(pos, this._mappingIndex);
         return this.speculate(/*lookAround*/ true, Preprocessor._peekAt, this, pos);
     }
 
     private static _peekAt(preprocessor: Preprocessor, pos: number): number | undefined {
+        if (pos < 0) {
+            return undefined;
+        }
         if (pos < preprocessor._charactersRead) {
-            preprocessor.setPos(pos);
+            preprocessor._setPos(pos);
             return preprocessor.read();
         }
         let codePoint: number | undefined;
@@ -392,10 +390,23 @@ export class Preprocessor {
      * @param lookAhead The number of characters to look ahead from the current position.
      * @param sequence The sequence of expectations to test.
      */
-    public peekIsSequence(lookAhead: number, ...sequence: [PeekExpectation, ...PeekExpectation[]]): boolean {
+    public peekIsSequence(lookAhead: number, ...sequence: [PeekExpectation | string, ...(PeekExpectation | string)[]]): boolean {
         for (let i: number = 0; i < sequence.length; i++) {
-            if (!this.peekIs(lookAhead + i, sequence[i])) {
+            const expectation: PeekExpectation | string = sequence[i];
+            if (typeof expectation === 'string') {
+                let textPos: number = 0;
+                while (textPos < expectation.length) {
+                    const codePoint: number | undefined = UnicodeUtils.codePointAt(expectation, textPos);
+                    if (codePoint === undefined || !this.peekIs(lookAhead, codePoint)) {
+                        return false;
+                    }
+                    textPos += UnicodeUtils.codePointSize(codePoint);
+                    lookAhead++;
+                }
+            } else if (!this.peekIs(lookAhead, expectation)) {
                 return false;
+            } else {
+                lookAhead++;
             }
         }
         return true;
@@ -561,32 +572,4 @@ export class Preprocessor {
         }
     }
 
-    private _findMapping(pos: number, selector: (mapping: IMapping) => number): number {
-        if (!this._mappings) {
-            return -1;
-        }
-
-        const mapping: IMapping = this._mappings[this._mappingIndex];
-        const nextMapping: IMapping | undefined = this._mappingIndex + 1 < this._mappings.length ?
-            this._mappings[this._mappingIndex + 1] :
-            undefined;
-
-        if (pos >= selector(mapping) && (!nextMapping || pos < selector(nextMapping))) {
-            return this._mappingIndex;
-        }
-
-        return ArrayUtils.greatestLowerBound(ArrayUtils.binarySearchBy(this._mappings, pos, selector));
-    }
-
-    private _toSourcePos(pos: number, mappingIndex: number = this._findMapping(pos, selectPos)): number {
-        if (!this._mappings || mappingIndex === -1) return pos;
-        const mapping: IMapping = this._mappings[mappingIndex];
-        return pos - mapping.pos + mapping.sourcePos;
-    }
-
-    private _toPos(sourcePos: number, mappingIndex: number = this._findMapping(sourcePos, selectSourcePos)): number {
-        if (!this._mappings || mappingIndex === -1) return sourcePos;
-        const mapping: IMapping = this._mappings[mappingIndex];
-        return sourcePos - mapping.sourcePos + mapping.pos;
-    }
 }

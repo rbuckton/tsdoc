@@ -4,30 +4,15 @@ import { ListBase } from "./ListBase";
 import { ContentUtils } from "./ContentUtils";
 import { Content } from "./Content";
 
-export interface IOrderedListMarker {
+export interface IListMarker {
     readonly markerOffset: number;
-    readonly ordered: true;
-    readonly bulletToken: Token.OrderedListItemBullet;
-    readonly start: number;
+    readonly bulletToken: Token;
     readonly tight: boolean;
     readonly padding: number;
 }
-
-export interface IUnorderedListMarker {
-    readonly markerOffset: number;
-    readonly ordered: false;
-    readonly bulletToken: Token.UnorderedListItemBullet;
-    readonly tight: boolean;
-    readonly padding: number;
-}
-
-export type ListMarker =
-    | IOrderedListMarker
-    | IUnorderedListMarker
-    ;
 
 export interface IListItemBaseParameters extends IBlockParameters, IBlockContainerParameters {
-    readonly listMarker: ListMarker;
+    listMarker: IListMarker;
 }
 
 export interface IListItemContainer extends Content {
@@ -41,7 +26,7 @@ export interface IListItemContainerParameters {
 }
 
 export abstract class ListItemBase extends Block implements IBlockContainer {
-    private _listMarker: ListMarker;
+    private _listMarker: IListMarker;
     
     public constructor(parameters: IListItemBaseParameters) {
         super(parameters);
@@ -71,18 +56,14 @@ export abstract class ListItemBase extends Block implements IBlockContainer {
     }
 
     /**
-     * Gets the list marker for this list item.
+     * Gets or sets the list marker for this list item.
      */
-    public get listMarker(): ListMarker {
-        return this._listMarker;
+    public get listMarker(): IListMarker {
+        return this.getListMarker();
     }
 
-    public set listMarker(value: ListMarker) {
-        if (value !== this._listMarker) {
-            this.beforeChange();
-            this._listMarker = value;
-            this.afterChange();
-        }
+    public set listMarker(value: IListMarker) {
+        this.setListMarker(value);
     }
 
     /** @override */
@@ -93,5 +74,19 @@ export abstract class ListItemBase extends Block implements IBlockContainer {
     /** @override */
     public isBlockContainer(): true {
         return true;
+    }
+
+    /** @virtual */
+    protected getListMarker(): IListMarker {
+        return this._listMarker;
+    }
+
+    /** @virtual */
+    protected setListMarker(value: IListMarker): void {
+        if (value !== this._listMarker) {
+            this.beforeChange();
+            this._listMarker = value;
+            this.afterChange();
+        }
     }
 }

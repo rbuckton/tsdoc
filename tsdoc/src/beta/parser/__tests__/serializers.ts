@@ -49,13 +49,16 @@ export class EnumView<T extends number> extends SnapshotView<T> {
     constructor(value: T, enumObject: object, placement?: Placement, weight?: number) {
         super(value, (value, print) => {
             const formattedValue: string = print(value);
+            const enumNames: string[] = [];
             for (const enumName of Object.keys(enumObject)) {
                 const enumValue: unknown = enumObject[enumName as keyof object];
                 if (enumValue === value) {
-                    return `${formattedValue} (${enumName})`;
+                    enumNames.push(enumName);
                 }
             }
-            return formattedValue;
+            return enumNames.length === 0 ? formattedValue :
+                enumNames.length === 1 ? enumNames[0] :
+                `${formattedValue} (${enumNames.join(', ')})`;
         }, placement, weight);
     }
 }

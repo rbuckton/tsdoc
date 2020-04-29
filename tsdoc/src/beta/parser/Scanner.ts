@@ -1,4 +1,5 @@
-import { Preprocessor, IPreprocessorState, IMapping } from "./Preprocessor";
+import { Preprocessor, IPreprocessorState } from "./Preprocessor";
+import { IMapping, Mapper } from "./Mapper";
 import { Token } from "./Token";
 import { CharacterCodes } from "./CharacterCodes";
 import { UnicodeUtils } from "./utils/UnicodeUtils";
@@ -563,11 +564,12 @@ export class Scanner {
             return count;
         }
 
+        const mapper: Mapper = this.preprocessor.mapper;
         const lineMap: LineMap = new LineMap(this.text);
         const lines: string[] = this.text.split(/\r\n?|[\n\u2028\u2029]/g);
         const lineNumberLength: number = lines.length.toString().length + 2;
-        const tokenStart: Position = lineMap.positionAt(this.startPos);
-        const tokenEnd: Position = lineMap.positionAt(this.pos);
+        const tokenStart: Position = lineMap.positionAt(mapper.toPos(this.startPos));
+        const tokenEnd: Position = lineMap.positionAt(mapper.toPos(this.pos));
         let s: string = '';
         for (let i: number = 0; i < lines.length; i++) {
             s += '\n';
@@ -582,7 +584,11 @@ export class Scanner {
                 if (i === tokenStart.line && i === tokenEnd.line) {
                     // start and end on same line
                     s += StringUtils.repeat(' ', countColumns(line.slice(0, tokenStart.character)));
-                    s += StringUtils.repeat(`^`, countColumns(line.slice(tokenStart.character, tokenEnd.character)));
+                    if (tokenStart.character === tokenEnd.character) {
+                        s += '|';
+                    } else {
+                        s += StringUtils.repeat(`^`, countColumns(line.slice(tokenStart.character, tokenEnd.character)));
+                    }
                 } else if (i === tokenStart.line) {
                     // start on this line
                     s += StringUtils.repeat(' ', countColumns(line.slice(0, tokenStart.character)));

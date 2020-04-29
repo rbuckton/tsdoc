@@ -9,17 +9,18 @@ import { MarkdownLinkParser } from "./inlineParsers/MarkdownLinkParser";
 import { MarkdownAutoLinkParser } from "./inlineParsers/MarkdownAutoLinkParser";
 import { MarkdownHtmlInlineParser } from "./inlineParsers/MarkdownHtmlInlineParser";
 import { MarkdownCharacterEntityParser } from "./inlineParsers/MarkdownCharacterEntityParser";
-import { Inline } from "../nodes/Inline";
+import { Inline, IInlineContainer } from "../nodes/Inline";
 import { Run } from "../nodes/Run";
 import { MarkdownLinkReference } from "../nodes/MarkdownLinkReference";
-import { Block } from "../nodes/Block";
-import { IMapping } from "./Preprocessor";
+import { IMapping } from "./Mapper";
 import { MarkdownLinkReferenceParser } from "./inlineParsers/MarkdownLinkReferenceParser";
 import { ParserBase } from "./ParserBase";
 import { Content } from "../nodes/Content";
 import { Document } from "../nodes/Document";
 import { MarkdownHardBreak } from "../nodes/MarkdownHardBreak";
 import { MarkdownSoftBreak } from "../nodes/MarkdownSoftBreak";
+import { GfmStrikethroughParser } from "./inlineParsers/GfmStrikethroughParser";
+import { GfmAutoLinkParser } from "./inlineParsers/GfmAutoLinkParser";
 
 export interface IDelimiterFrame {
     prev?: IDelimiterFrame;
@@ -46,34 +47,47 @@ export class InlineParser extends ParserBase {
     private _delimiterTokens: Set<Token> = new Set();
     private _delimiters: IDelimiterFrame | undefined;
     private _brackets: IBracketFrame | undefined;
-    private _inlineSyntaxParsers: IInlineSyntaxParser<Inline>[] = [
-        MarkdownLineBreakParser,
-        MarkdownBackslashEscapeParser,
-        MarkdownCodeSpanParser,
-        MarkdownDelimiterParser,
-        MarkdownLinkParser,
-        MarkdownAutoLinkParser,
-        MarkdownHtmlInlineParser,
-        MarkdownCharacterEntityParser,
-    ];
-    private _delimiterProcessors: IDelimiterProcessor[] = [
-        MarkdownDelimiterParser
-    ];
+    private _inlineSyntaxParsers: IInlineSyntaxParser<Inline>[];
+    private _delimiterProcessors: IDelimiterProcessor[];
 
-    public constructor(document: Document, text: string, sourceMappings: ReadonlyArray<IMapping> | undefined) {
+    public constructor(document: Document, text: string, sourceMappings: ReadonlyArray<IMapping> | undefined, gfm: boolean) {
         super(text.replace(/\s+$/, ''), sourceMappings);
         this._document = document;
+        this._inlineSyntaxParsers = InlineParser.getDefaultInlineSyntaxParsers(gfm);
+        this._delimiterProcessors = InlineParser.getDefaultDelimiterParsers(gfm);
         this.scanner.scan();
+    }
+
+    public static getDefaultInlineSyntaxParsers(gfm: boolean): IInlineSyntaxParser<Inline>[] {
+        return [
+            MarkdownLineBreakParser,
+            MarkdownBackslashEscapeParser,
+            MarkdownCodeSpanParser,
+            MarkdownDelimiterParser,
+            ...(gfm ? [GfmStrikethroughParser] : []),
+            MarkdownLinkParser,
+            ...(gfm ? [GfmAutoLinkParser] : []),
+            MarkdownAutoLinkParser,
+            MarkdownHtmlInlineParser,
+            MarkdownCharacterEntityParser,
+        ];
+    }
+
+    public static getDefaultDelimiterParsers(gfm: boolean): IDelimiterProcessor[] {
+        return [
+            MarkdownDelimiterParser,
+            ...(gfm ? [GfmStrikethroughParser] : [])
+        ];
     }
 
     public get document(): Document {
         return this._document;
     }
 
-    public parse(block: Block): void {
+    public parse(block: IInlineContainer): void {
         let lastRun: Run | undefined;
         while (this.scanner.token() !== Token.EndOfFileToken) {
-            const inline: Inline | undefined = this._parseInline();
+            const inline: Inline | undefined = this._parseInline(block);
             if (inline) {
                 lastRun = undefined;
                 block.appendChild(inline);
@@ -96,9 +110,9 @@ export class InlineParser extends ParserBase {
         this._collapseRuns(block);
     }
 
-    private _parseInline(): Inline | undefined {
+    private _parseInline(parent: IInlineContainer): Inline | undefined {
         for (const inlineSyntaxParser of this._inlineSyntaxParsers) {
-            const inline: Inline | undefined = this.tryParse(inlineSyntaxParser.tryParse);
+            const inline: Inline | undefined = this.tryParse(inlineSyntaxParser.tryParse, parent);
             if (inline) {
                 return inline;
             }

@@ -86,6 +86,23 @@ export namespace UnicodeUtils {
         return 1;
     }
 
+    /**
+     * Computes the number of code points in a string.
+     */
+    export function codePointCount(text: string): number {
+        let count: number = 0;
+        let pos: number = 0;
+        while (pos < text.length) {
+            const codePoint: number | undefined = codePointAt(text, pos);
+            if (codePoint === undefined) {
+                break;
+            }
+            pos += codePointSize(codePoint);
+            count++;
+        }
+        return count;
+    }
+
     function es6StringFromCodePoint(...codePoints: number[]): string {
         return (String as ES6StringConstructor).fromCodePoint(...codePoints);
     }

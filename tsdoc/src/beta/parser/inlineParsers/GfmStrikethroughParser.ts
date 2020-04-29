@@ -4,33 +4,31 @@ import { Preprocessor } from "../Preprocessor";
 import { CharacterCodes } from "../CharacterCodes";
 import { UnicodeUtils } from "../utils/UnicodeUtils";
 import { Scanner } from "../Scanner";
-import { MarkdownDelimiterScanner } from "../scanners/MarkdownDelimiterScanner";
-import { MarkdownStrongSpan } from "../../nodes/MarkdownStrongSpan";
-import { MarkdownEmSpan } from "../../nodes/MarkdownEmSpan";
 import { Run } from "../../nodes/Run";
 import { Content } from "../../nodes/Content";
+import { GfmDelimiterScanner } from "../scanners/GfmDelimiterScanner";
+import { GfmStrikethroughSpan } from "../../nodes/GfmStrikethroughSpan";
 
-export namespace MarkdownDelimiterParser {
+export namespace GfmStrikethroughParser {
     export function tryParse(parser: InlineParser): Run | undefined {
         // https://spec.commonmark.org/0.29/#emphasis-and-strong-emphasis
         const scanner: Scanner = parser.scanner;
-        const token: Token = scanner.rescan(MarkdownDelimiterScanner.rescanDelimiterToken);
-        if (!Token.isEmphasisToken(token)) {
+        const preprocessor: Preprocessor = scanner.preprocessor;
+        const token: Token = scanner.rescan(GfmDelimiterScanner.rescanDelimiterToken);
+        if (token !== Token.TildeTildeToken) {
             return undefined;
         }
 
-        const preprocessor: Preprocessor = scanner.preprocessor;
         const leadChar: number = preprocessor.peekAt(scanner.startPos - 1) || CharacterCodes.lineFeed;
         const leadIsWhitespace: boolean = UnicodeUtils.isUnicodeWhitespace(leadChar);
         const leadIsPunctuation: boolean = UnicodeUtils.isUnicodePunctuation(leadChar);
-        const trailChar: number = preprocessor.peekAt(scanner.pos) || CharacterCodes.lineFeed;
+        const trailChar: number = preprocessor.peek(0) || CharacterCodes.lineFeed;
         const trailIsWhitespace: boolean = UnicodeUtils.isUnicodeWhitespace(trailChar);
         const trailIsPunctuation: boolean = UnicodeUtils.isUnicodePunctuation(trailChar);
         const leftFlank: boolean = !trailIsWhitespace && (!trailIsPunctuation || leadIsWhitespace || leadIsPunctuation);
         const rightFlank: boolean = !leadIsWhitespace && (!leadIsPunctuation || trailIsWhitespace || trailIsPunctuation);
-        const isUnderscore: boolean = token === Token.UnderscoreEmphasisToken;
-        const canOpen: boolean = leftFlank && (!isUnderscore || !rightFlank || leadIsPunctuation);
-        const canClose: boolean = rightFlank && (!isUnderscore || !leftFlank || trailIsPunctuation);
+        const canOpen: boolean = leftFlank;
+        const canClose: boolean = rightFlank;
         const pos: number = scanner.startPos;
         const end: number = scanner.pos;
         const text: string = scanner.getTokenText();
@@ -47,16 +45,17 @@ export namespace MarkdownDelimiterParser {
     export function processDelimiter(parser: InlineParser, opener: IDelimiterFrame | undefined, closer: IDelimiterFrame): IDelimiterFrame | "not-processed" | undefined {
         // https://spec.commonmark.org/0.29/#emphasis-and-strong-emphasis
         // https://spec.commonmark.org/0.29/#phase-2-inline-structure
+        // https://github.github.com/gfm/#strikethrough-extension-
         if (!opener) {
             return closer.next;
         }
 
-        if (!Token.isEmphasisToken(closer.token)) {
+        if (closer.token !== Token.TildeTildeToken || closer.remaining < 2 || opener.remaining < 2) {
             return "not-processed";
         }
 
         // calculate actual number of delimiters used from closer
-        const delimiterCount: number = (closer.remaining >= 2 && opener.remaining >= 2) ? 2 : 1;
+        const delimiterCount: number = 2;
         const openerRun: Run = opener.node;
         const closerRun: Run = closer.node;
 
@@ -72,9 +71,7 @@ export namespace MarkdownDelimiterParser {
         // build contents for new emph element
         const pos: number = openerRun.pos + opener.remaining;
         const end: number = closerRun.pos + closer.remaining;
-        const node: MarkdownStrongSpan | MarkdownEmSpan = delimiterCount === 1 ?
-            new MarkdownEmSpan({ pos, end, emphasisToken: closer.token }) :
-            new MarkdownStrongSpan({ pos, end, emphasisToken: closer.token });
+        const node: GfmStrikethroughSpan = new GfmStrikethroughSpan({ pos, end });
 
         // move everything between the open and closer into the inline
         let current: Content | undefined = openerRun.nextSibling;

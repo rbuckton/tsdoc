@@ -1,7 +1,7 @@
 import { Node } from "../nodes/Node";
 import { Scanner } from "./Scanner";
 import { LineMap } from "./LineMap";
-import { IMapping } from "./Preprocessor";
+import { IMapping } from "./Mapper";
 
 export abstract class ParserBase {
     private _scanner: Scanner;

@@ -67,7 +67,7 @@ export abstract class Block extends Content {
     /**
      * Gets the last of this node if that child is an `Inline`.
      */
-    public get lastInlineChild(): Inline | undefined {
+    public get lastChildInline(): Inline | undefined {
         return this.lastChild && this.lastChild.isInline() ? this.lastChild : undefined;
     }
 

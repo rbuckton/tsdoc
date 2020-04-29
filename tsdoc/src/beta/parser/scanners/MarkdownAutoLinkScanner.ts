@@ -96,10 +96,7 @@ export namespace MarkdownAutoLinkScanner {
         //
         // An email address, for these purposes, is anything that matches the non-normative regex from the HTML5 spec:
         //
-        // /^
-        // [a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+
-        // @
-        // [a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+        // /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
         if (!Token.isTextLike(scanner.token())) {
             return undefined;
         }

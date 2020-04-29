@@ -13,6 +13,11 @@ type ListBase = import("./ListBase").ListBase;
 type ListItemBase = import("./ListItemBase").ListItemBase;
 type IListItemContainer = import("./ListItemBase").IListItemContainer;
 type LinkBase = import("./LinkBase").LinkBase;
+type TableBase = import("./TableBase").TableBase;
+type TableRowBase = import("./TableRowBase").TableRowBase;
+type ITableRowContainer = import("./TableRowBase").ITableRowContainer;
+type TableCellBase = import("./TableCellBase").TableCellBase;
+type ITableCellContainer = import("./TableCellBase").ITableCellContainer;
 
 declare const assignabilityHack: unique symbol;
 
@@ -49,6 +54,10 @@ export const enum DocumentPosition {
      * Indicates the provided node is contained by (and therefore also follows) this node in the document hierarchy.
      */
     ContainedBy,
+}
+
+export interface INodeVersionSnapshot {
+    matches(other: INodeVersionSnapshot): boolean;
 }
 
 export abstract class Node {
@@ -126,6 +135,22 @@ export abstract class Node {
     }
 
     /**
+     * Indicates whether this node can contain `TableRowBase` nodes.
+     * @virtual
+     */
+    public isTableRowContainer(): this is ITableRowContainer {
+        return false;
+    }
+
+    /**
+     * Indicates whether this node can contain `TableCellBase` nodes.
+     * @virtual
+     */
+    public isTableCellContainer(): this is ITableCellContainer {
+        return false;
+    }
+
+    /**
      * Indicates whether this node is a syntactic element.
      * @virtual
      */
@@ -190,6 +215,30 @@ export abstract class Node {
     }
 
     /**
+     * Indicates whether this node is a table.
+     * @virtual
+     */
+    public isTable(): this is TableBase {
+        return false;
+    }
+
+    /**
+     * Indicates whether this node is a table row.
+     * @virtual
+     */
+    public isTableRow(): this is TableRowBase {
+        return false;
+    }
+
+    /**
+     * Indicates whether this node is a table cell.
+     * @virtual
+     */
+    public isTableCell(): this is TableCellBase {
+        return false;
+    }
+
+    /**
      * Indicates whether this node is permitted to have the provided node as its parent.
      * @virtual
      */
@@ -197,6 +246,8 @@ export abstract class Node {
         if (this.isBlock() && parent.isBlockContainer()) return true;
         if (this.isListItem() && parent.isListItemContainer()) return true;
         if (this.isInline() && parent.isInlineContainer()) return true;
+        if (this.isTableRow() && parent.isTableRowContainer()) return true;
+        if (this.isTableCell() && parent.isTableCellContainer()) return true;
         return false;
     }
 
@@ -209,6 +260,8 @@ export abstract class Node {
         if (this.isBlockContainer() && child.isBlock()) return true;
         if (this.isListItemContainer() && child.isListItem()) return true;
         if (this.isInlineContainer() && child.isInline()) return true;
+        if (this.isTableRowContainer() && child.isTableRow()) return true;
+        if (this.isTableCellContainer() && child.isTableCell()) return true;
         return false;
     }
 

@@ -19,8 +19,11 @@ import { MarkdownCodeBlock } from "../nodes/MarkdownCodeBlock";
 import { MarkdownParagraph } from "../nodes/MarkdownParagraph";
 import { Block } from "../nodes/Block";
 import { ContentWriter } from "./ContentWriter";
-import { IMapping } from "./Preprocessor";
+import { IMapping } from "./Mapper";
 import { ParserBase } from "./ParserBase";
+import { GfmTableParser } from "./blockParsers/GfmTableParser";
+import { GfmTaskListItemParser } from "./blockParsers/GfmTaskListItemParser";
+import { GfmTaskListParser } from "./blockParsers/GfmTaskListParser";
 
 interface IBlockState {
     closed?: boolean;
@@ -51,17 +54,19 @@ export class BlockParser extends ParserBase {
     private _lastTip: Block | undefined;
     private _blockSyntaxParserMap: Map<SyntaxKind, IBlockSyntaxParser<Block>>;
     private _blockSyntaxParsers: ReadonlyArray<IBlockSyntaxParser<Block>>;
+    private _gfm: boolean;
 
-    public constructor(text: string, sourceMappings?: IMapping[]) {
+    public constructor(text: string, sourceMappings?: IMapping[], gfm?: boolean) {
         super(text, sourceMappings);
         this._line = 0;
         this._linePos = 0;
         this._indent = 0;
         this._blank = false;
-        this._lastNextNonIndentPos= -1;
-        this._previousLineEnd= -1;
+        this._gfm = !!gfm;
+        this._lastNextNonIndentPos = -1;
+        this._previousLineEnd = -1;
         this._hasUnmatchedBlocks = false;
-        this._blockSyntaxParsers = BlockParser.getDefaultBlockSyntaxParsers();
+        this._blockSyntaxParsers = BlockParser.getDefaultBlockSyntaxParsers(this._gfm);
         this._blockSyntaxParserMap = new Map();
         for (const blockSyntaxParser of this._blockSyntaxParsers) {
             this._blockSyntaxParserMap.set(blockSyntaxParser.kind, blockSyntaxParser);
@@ -114,7 +119,7 @@ export class BlockParser extends ParserBase {
     /**
      * Gets the default parsers used to parse block syntax.
      */
-    public static getDefaultBlockSyntaxParsers(): ReadonlyArray<IBlockSyntaxParser<Block>> {
+    public static getDefaultBlockSyntaxParsers(gfm: boolean): ReadonlyArray<IBlockSyntaxParser<Block>> {
         return [
             DocumentParser,
             DocBlockTagParser,
@@ -123,8 +128,10 @@ export class BlockParser extends ParserBase {
             MarkdownCodeBlockParser,
             MarkdownHtmlBlockParser,
             MarkdownThematicBreakParser,
+            ...(gfm ? [GfmTaskListParser, GfmTaskListItemParser] : []),
             MarkdownListParser,
             MarkdownListItemParser,
+            ...(gfm ? [GfmTableParser] : []),
             MarkdownParagraphParser
         ];
     }
@@ -169,7 +176,7 @@ export class BlockParser extends ParserBase {
         let nextBlock: Block | undefined = block.lastChildBlock;
         while (nextBlock && !getState(this, nextBlock).closed) {
             block = nextBlock;
-            switch (this._continue(block)) {
+            switch (this._tryContinue(block)) {
                 case ContinueResult.Matched:
                     // this.acceptIndent();
                     nextBlock = block.lastChildBlock;
@@ -189,7 +196,7 @@ export class BlockParser extends ParserBase {
         // step 2: if the line hasn't already been consumed, start a new block if possible
         let matchedLeaf: boolean = block.kind !== SyntaxKind.MarkdownParagraph && this._acceptsLines(block);
         while (block && !matchedLeaf) {
-            switch (this._start(block)) {
+            switch (this.tryStart(block)) {
                 case StartResult.Container:
                     // this.acceptIndent();
                     block = this._tip;
@@ -247,7 +254,7 @@ export class BlockParser extends ParserBase {
         this.scanner.scanLine();
     }
 
-    private _start(container: Block): StartResult {
+    public tryStart(container: Block): StartResult {
         this.nextNonIndent();
         for (const blockSyntaxParser of this._blockSyntaxParsers) {
             const startResult: StartResult = blockSyntaxParser.tryStart(this, container);
@@ -258,7 +265,7 @@ export class BlockParser extends ParserBase {
         return StartResult.Unmatched;
     }
 
-    private _continue(block: Block): ContinueResult {
+    private _tryContinue(block: Block): ContinueResult {
         this.nextNonIndent();
         const blockSyntaxParser: IBlockSyntaxParser<Block> | undefined = this._blockSyntaxParserMap.get(block.kind);
         return blockSyntaxParser ? blockSyntaxParser.tryContinue(this, block) : ContinueResult.Unmatched;
@@ -373,12 +380,14 @@ export class BlockParser extends ParserBase {
 
     private _processInlines(block: Block): void {
         const blockSyntaxParser: IBlockSyntaxParser<Block> | undefined = this._blockSyntaxParserMap.get(block.kind);
-        if (blockSyntaxParser && blockSyntaxParser.getContent) {
+        if (blockSyntaxParser && blockSyntaxParser.getContent && block.isInlineContainer()) {
             const content: ContentWriter | undefined = blockSyntaxParser.getContent(this, block);
             if (content && content.length) {
-                const parser = new InlineParser(this._root, content.toString(), content.mappings);
+                const parser = new InlineParser(this._root, content.toString(), content.mappings, this._gfm);
                 parser.parse(block);
             }
+        } else if (blockSyntaxParser && blockSyntaxParser.processInlines) {
+            blockSyntaxParser.processInlines(this, block);
         } else {
             block.forEachChild(child => {
                 if (child.isBlock()) {

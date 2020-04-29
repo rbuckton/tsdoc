@@ -3,80 +3,89 @@ export enum Token {
     EndOfFileToken,
 
     // Whitespace
-    NewLineTrivia,                  // \r (or) \n (or) \r\n
-    SpaceTrivia,                    // " "
-    TabTrivia,                      // \t
-    OtherAsciiWhitespaceTrivia,     // \r, \n, \v
-    OtherUnicodeWhitespaceTrivia,   // Unicode category Zs, \t, \r, \n, \f
+    NewLineTrivia,                      // \r (or) \n (or) \r\n
+    SpaceTrivia,                        // " "
+    TabTrivia,                          // \t
+    OtherAsciiWhitespaceTrivia,         // \r, \n, \v
+    OtherUnicodeWhitespaceTrivia,       // Unicode category Zs, \t, \r, \n, \f
 
     // Punctuation
     // - ASCII Punctuation Characters
-    ExclamationToken,               // !
-    QuoteMarkToken,                 // "
-    HashToken,                      // #
-    DollarToken,                    // $
-    PercentToken,                   // %
-    AmpersandToken,                 // &
-    ApostropheToken,                // '
-    OpenParenToken,                 // (
-    CloseParenToken,                // )
-    AsteriskToken,                  // *
-    PlusToken,                      // +
-    CommaToken,                     // ,
-    MinusToken,                     // -
-    DotToken,                       // .
-    SlashToken,                     // /
-    ColonToken,                     // :
-    SemiColonToken,                 // ;
-    LessThanToken,                  // <
-    EqualsToken,                    // =
-    GreaterThanToken,               // >
-    QuestionToken,                  // ?
-    AtToken,                        // @
-    OpenBracketToken,               // [
-    BackslashToken,                 // \
-    CloseBracketToken,              // ]
-    CaretToken,                     // ^
-    UnderscoreToken,                // _
-    BacktickToken,                  // `
-    OpenBraceToken,                 // {
-    BarToken,                       // |
-    CloseBraceToken,                // }
-    TildeToken,                     // ~
+    ExclamationToken,                   // !
+    QuoteMarkToken,                     // "
+    HashToken,                          // #
+    DollarToken,                        // $
+    PercentToken,                       // %
+    AmpersandToken,                     // &
+    ApostropheToken,                    // '
+    OpenParenToken,                     // (
+    CloseParenToken,                    // )
+    AsteriskToken,                      // *
+    PlusToken,                          // +
+    CommaToken,                         // ,
+    MinusToken,                         // -
+    DotToken,                           // .
+    SlashToken,                         // /
+    ColonToken,                         // :
+    SemiColonToken,                     // ;
+    LessThanToken,                      // <
+    EqualsToken,                        // =
+    GreaterThanToken,                   // >
+    QuestionToken,                      // ?
+    AtToken,                            // @
+    OpenBracketToken,                   // [
+    BackslashToken,                     // \
+    CloseBracketToken,                  // ]
+    CaretToken,                         // ^
+    UnderscoreToken,                    // _
+    BacktickToken,                      // `
+    OpenBraceToken,                     // {
+    BarToken,                           // |
+    CloseBraceToken,                    // }
+    TildeToken,                         // ~
     // - Punctuation Characters
-    UnicodePunctuationToken,        // Unicode categories Pc, Pd, Pe, Pf, Pi, Po, or Ps
+    UnicodePunctuationToken,            // Unicode categories Pc, Pd, Pe, Pf, Pi, Po, or Ps
 
     // Other
-    DecimalDigits,                  // 0-9
+    DecimalDigits,                      // 0-9
     Text,
 
     // TSDoc tokens
-    DocTagName,                     // param, type, etc.
+    DocTagName,                         // param, type, etc.
 
     // Markdown Tokens
-    PartialTabTrivia,               // zero-width trivia indicating a single column preceding a tab stop
-    AtxHeadingToken,                // #{1,6}
-    BacktickCodeFenceToken,         // `{3,}
-    TildeCodeFenceToken,            // ~{3,}
-    EqualsSetextHeadingToken,       // =====
-    MinusSetextHeadingToken,        // -----
-    AsteriskThematicBreakToken,     // ***
-    MinusThematicBreakToken,        // ---
-    UnderscoreThematicBreakToken,   // ___
-    OrderedListNumberLiteral,       // a decimal number preceding a . or a )
-    LinkLabelToken,                 // [abc]
-    LinkDestinationToken,           // <abc> or http://foo
-    LinkTitleToken,                 // "abc" or 'abc' or (abc)
-    SpaceSpaceHardBreakToken,       // (space)(space)\n
-    BackslashHardBreakToken,        // (backslash)\n
-    ExclamationOpenBracketToken,    // ![
-    AsteriskEmphasisToken,          // * or ** or ***
-    UnderscoreEmphasisToken,        // _ or __ or ___
-    AbsoluteUri,                    // scheme:uri
-    EmailAddress,                   // user@domain
-    BacktickString,                 // ` or `` or ``` ...
-    CodeSpan,                       // `a` or `` a`b `` ...
-    BackslashEscapeCharacter,       // \\ (or other escapes)
+    PartialTabTrivia,                   // zero-width trivia indicating a single column preceding a tab stop
+    AtxHeadingToken,                    // #{1,6}
+    BacktickCodeFenceToken,             // `{3,}
+    TildeCodeFenceToken,                // ~{3,}
+    EqualsSetextHeadingToken,           // =====
+    MinusSetextHeadingToken,            // -----
+    AsteriskThematicBreakToken,         // ***
+    MinusThematicBreakToken,            // ---
+    UnderscoreThematicBreakToken,       // ___
+    OrderedListNumberLiteral,           // a decimal number preceding a . or a )
+    LinkLabelToken,                     // [abc]
+    LinkDestinationToken,               // <abc> or http://foo
+    LinkTitleToken,                     // "abc" or 'abc' or (abc)
+    SpaceSpaceHardBreakToken,           // (space)(space)\n
+    BackslashHardBreakToken,            // (backslash)\n
+    ExclamationOpenBracketToken,        // ![
+    AsteriskEmphasisToken,              // * or ** or ***
+    UnderscoreEmphasisToken,            // _ or __ or ___
+    AbsoluteUri,                        // scheme:uri
+    EmailAddress,                       // user@domain
+    BacktickString,                     // ` or `` or ``` ...
+    CodeSpan,                           // `a` or `` a`b `` ...
+    BackslashEscapeCharacter,           // \\ (or other escapes)
+    UnalignedTableDelimiterToken,       // -
+    LeftAlignedTableDelimiterToken,     // :-
+    RightAlignedTableDelimiterToken,    // -:
+    CenterAlignedTableDelimiterToken,   // :-:
+    UncheckedTaskListMarkerToken,       // [ ]
+    CheckedTaskListMarkerToken,         // [x]
+    TildeTildeToken,                    // ~~
+    GfmWwwAutolinkToken,                // www.commonmark.org
+    GfmUrlAutolinkToken,                // http://www.commonmark.org
 
     // Html Tokens
     HtmlProcessingInstructionStartToken,    // <?
@@ -402,5 +411,29 @@ export namespace Token {
     export function isEmphasisToken(token: Token): token is Token.EmphasisToken {
         return token === Token.AsteriskEmphasisToken
             || token === Token.UnderscoreEmphasisToken;
+    }
+
+    export type TableDelimiterToken =
+        | Token.UnalignedTableDelimiterToken
+        | Token.LeftAlignedTableDelimiterToken
+        | Token.RightAlignedTableDelimiterToken
+        | Token.CenterAlignedTableDelimiterToken
+        ;
+
+    export function isTableDelimiterToken(token: Token): token is Token.TableDelimiterToken {
+        return token === Token.UnalignedTableDelimiterToken
+            || token === Token.LeftAlignedTableDelimiterToken
+            || token === Token.RightAlignedTableDelimiterToken
+            || token === Token.CenterAlignedTableDelimiterToken;
+    }
+
+    export type TaskListMarkerToken =
+        | Token.UncheckedTaskListMarkerToken
+        | Token.CheckedTaskListMarkerToken
+        ;
+
+    export function isTaskListMarkerToken(token: Token): token is Token.TaskListMarkerToken {
+        return token === Token.UncheckedTaskListMarkerToken
+            || token === Token.CheckedTaskListMarkerToken;
     }
 }

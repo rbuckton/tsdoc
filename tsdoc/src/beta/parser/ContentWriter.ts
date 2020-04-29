@@ -1,4 +1,4 @@
-import { IMapping } from "./Preprocessor";
+import { IMapping } from "./Mapper";
 
 interface IMutableMapping {
     pos: number;
