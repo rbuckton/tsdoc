@@ -1,13 +1,14 @@
 import { SyntaxKind } from "./SyntaxKind";
 import { ListItemBase, IListItemBaseParameters, IListMarker } from "./ListItemBase";
-import { TSDocPrinter } from "../parser/TSDocPrinter";
 import { Node } from "./Node";
 import { GfmTaskList } from "./GfmTaskList";
-import { Token } from "../parser/Token";
+import { IBlockSyntax } from "../syntax/IBlockSyntax";
+import { GfmTaskListItemSyntax } from "../syntax/gfm/block/GfmTaskListItemSyntax";
+import { ListBase } from "./ListBase";
 
 export interface IGfmTaskListMarker extends IListMarker {
     readonly task: true;
-    readonly bulletToken: Token.UnorderedListItemBullet;
+    readonly bullet: '*' | '+' | '-';
     readonly checked: boolean;
 }
 
@@ -20,60 +21,75 @@ export class GfmTaskListItem extends ListItemBase {
         super(parameters);
     }
 
+    /**
+     * {@inheritDoc Node.kind}
+     * @override
+     */
     public get kind(): SyntaxKind.GfmTaskListItem {
         return SyntaxKind.GfmTaskListItem;
     }
 
+    /**
+     * {@inheritDoc Node.syntax}
+     * @override
+     */
+    public get syntax(): IBlockSyntax<GfmTaskListItem> {
+        return GfmTaskListItemSyntax;
+    }
+
+    /**
+     * {@inheritDoc ListItemBase.listMarker}
+     * @override
+     */
     public get listMarker(): IGfmTaskListMarker {
         return this.getListMarker() as IGfmTaskListMarker;
     }
 
+    /**
+     * {@inheritDoc ListItemBase.listMarker}
+     * @override
+     */
     public set listMarker(value: IGfmTaskListMarker) {
         this.setListMarker(value);
     }
 
     /**
-     * Gets the parent of this node, if that parent is a `GfmTaskList`.
+     * Gets the parent of this node, if that parent is a {@link GfmTaskList}.
      */
     public get parentGfmTaskList(): GfmTaskList | undefined {
-        return this.parent instanceof GfmTaskList ? this.parent : undefined;
+        const parent: ListBase | undefined = this.parentList;
+        return parent && parent.kind === SyntaxKind.GfmTaskList ? parent as GfmTaskList : undefined;
     }
 
     /**
-     * Gets the previous sibling of this node, if that sibling is a `GfmTaskListItem`.
+     * Gets the previous sibling of this node, if that sibling is a {@link GfmTaskListItem}.
      */
     public get previousSiblingGfmTaskListItem(): GfmTaskListItem | undefined {
-        return this.previousSibling instanceof GfmTaskListItem ? this.previousSibling : undefined;
+        const previousSibling: ListItemBase | undefined = this.previousSiblingListItem;
+        return previousSibling && previousSibling.kind === SyntaxKind.GfmTaskListItem ? previousSibling as GfmTaskListItem : undefined;
     }
 
     /**
-     * Gets the next sibling of this node, if that sibling is a `GfmTaskListItem`.
+     * Gets the next sibling of this node, if that sibling is a {@link GfmTaskListItem}.
      */
     public get nextSiblingGfmTaskListItem(): GfmTaskListItem | undefined {
-        return this.nextSibling instanceof GfmTaskListItem ? this.nextSibling : undefined;
+        const nextSibling: ListItemBase | undefined = this.nextSiblingListItem;
+        return nextSibling && nextSibling.kind === SyntaxKind.GfmTaskListItem ? nextSibling as GfmTaskListItem : undefined;
     }
 
-    /** @override */
+    /**
+     * {@inheritDoc Node.canHaveParent()}
+     * @override
+     */
     public canHaveParent(node: Node): boolean {
-        return node instanceof GfmTaskList;
+        return node.kind === SyntaxKind.GfmTaskList;
     }
 
-    /** @override */
+    /**
+     * {@inheritDoc ListItemBase.setListMarker()}
+     * @override
+     */
     protected setListMarker(value: IListMarker): void {
         super.setListMarker(value);
-    }
-
-    /** @override */
-    protected print(printer: TSDocPrinter): void {
-        // const bullet: string = this.listMarker.ordered ?
-        //     `${this.listMarker.start}${this.listMarker.bulletToken === Token.CloseParenToken ? ')' : '.'}` :
-        //     `${this.listMarker.bulletToken === Token.MinusToken ? `-` : '*'}`;
-        // printer.pushBlock({
-        //     indent: this.listMarker.markerOffset,
-        //     firstLinePrefix: `${bullet}${StringUtils.repeat(' ', this.listMarker.padding - bullet.length)}`,
-        //     linePrefix: StringUtils.repeat(' ', this.listMarker.padding)
-        // });
-        // this.printChildren(printer);
-        // printer.popBlock();
     }
 }

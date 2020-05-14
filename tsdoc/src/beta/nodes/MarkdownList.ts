@@ -1,8 +1,10 @@
 import { SyntaxKind } from "./SyntaxKind";
 import { ListBase, IListBaseParameters } from "./ListBase";
-import { TSDocPrinter } from "../parser/TSDocPrinter";
 import { Node } from "./Node";
 import { MarkdownListItem } from "./MarkdownListItem";
+import { IBlockSyntax } from "../syntax/IBlockSyntax";
+import { MarkdownListSyntax } from "../syntax/commonmark/block/MarkdownListSyntax";
+import { ListItemBase } from "./ListItemBase";
 
 export interface IMarkdownListParameters extends IListBaseParameters {
 }
@@ -12,31 +14,43 @@ export class MarkdownList extends ListBase {
         super(parameters);
     }
 
+    /**
+     * {@inheritDoc Node.kind}
+     * @override
+     */
     public get kind(): SyntaxKind.MarkdownList {
         return SyntaxKind.MarkdownList;
     }
 
     /**
-     * Gets the first child of this node, if that child is a `MarkdownListItem`.
+     * {@inheritDoc Node.syntax}
+     * @override
      */
-    public get firstChildMarkdownListItem(): MarkdownListItem | undefined {
-        return this.firstChild instanceof MarkdownListItem ? this.firstChild : undefined;
+    public get syntax(): IBlockSyntax<MarkdownList> {
+        return MarkdownListSyntax;
     }
 
     /**
-     * Gets the last child of this node, if that child is a `ListItemBase`.
+     * Gets the first child of this node, if that child is a {@link MarkdownListItem}.
+     */
+    public get firstChildMarkdownListItem(): MarkdownListItem | undefined {
+        const firstChild: ListItemBase | undefined = this.firstChildListItem;
+        return firstChild && firstChild.kind === SyntaxKind.MarkdownListItem ? firstChild as MarkdownListItem : undefined;
+    }
+
+    /**
+     * Gets the last child of this node, if that child is a {@link MarkdownListItem}.
      */
     public get lastChildMarkdownListItem(): MarkdownListItem | undefined {
-        return this.lastChild instanceof MarkdownListItem ? this.lastChild : undefined;
+        const lastChild: ListItemBase | undefined = this.lastChildListItem;
+        return lastChild && lastChild.kind === SyntaxKind.MarkdownListItem ? lastChild as MarkdownListItem : undefined;
     }
 
-    /** @override */
+    /**
+     * {@inheritDoc Node.canHaveChild()}
+     * @override
+     */
     public canHaveChild(node: Node): boolean {
-        return node instanceof MarkdownListItem;
-    }
-
-    /** @override */
-    protected print(printer: TSDocPrinter): void {
-        this.printChildren(printer);
+        return node.kind === SyntaxKind.MarkdownListItem;
     }
 }

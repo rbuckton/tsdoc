@@ -1,6 +1,10 @@
 import { Block, IBlockParameters } from "./Block";
-import { ITableRowContainerParameters, ITableRowContainer, TableRowBase } from "./TableRowBase";
-import { ContentUtils } from "./ContentUtils";
+import { TableRowBase } from "./TableRowBase";
+import { ContentUtils } from "../utils/ContentUtils";
+import { TableRowContainerMixin, ITableRowContainerParameters } from "./mixins/TableRowContainerMixin";
+import { mixin } from "../mixin";
+import { BlockChildMixin } from "./mixins/BlockChildMixin";
+import { BlockSiblingMixin } from "./mixins/BlockSiblingMixin";
 
 export interface ITableBaseParameters extends IBlockParameters, ITableRowContainerParameters {
     alignments?: ReadonlyArray<TableAlignment>;
@@ -13,7 +17,11 @@ export const enum TableAlignment {
     Right
 }
 
-export abstract class TableBase extends Block implements ITableRowContainer {
+export abstract class TableBase extends mixin(Block, [
+    BlockChildMixin,
+    BlockSiblingMixin,
+    TableRowContainerMixin,
+]) {
     private _alignments: ReadonlyArray<TableAlignment>;
 
     public constructor(parameters?: ITableBaseParameters) {
@@ -40,24 +48,10 @@ export abstract class TableBase extends Block implements ITableRowContainer {
     }
 
     /**
-     * Gets the first child of this node, if that child is a `TableRowBase`.
-     */
-    public get firstChildTableRow(): TableRowBase | undefined {
-        return this.firstChild && this.firstChild.isTableRow() ? this.firstChild : undefined;
-    }
-
-    /**
-     * Gets the last child of this node, if that child is a `TableRowBase`.
-     */
-    public get lastChildTableRow(): TableRowBase | undefined {
-        return this.lastChild && this.lastChild.isTableRow() ? this.lastChild : undefined;
-    }
-
-    /**
      * Gets the header row of this table.
      */
     public get headerRow(): TableRowBase | undefined {
-        return this.firstChild && this.firstChild.isTableRow() ? this.firstChild : undefined;
+        return this.firstChildTableRow;
     }
 
     /**
@@ -76,13 +70,11 @@ export abstract class TableBase extends Block implements ITableRowContainer {
         return lastRow && lastRow !== this.headerRow ? lastRow : undefined;
     }
 
-    /** @override */
+    /**
+     * {@inheritDoc Node.isTable()}
+     * @override
+     */
     public isTable(): true {
-        return true;
-    }
-
-    /** @override */
-    public isTableRowContainer(): true {
         return true;
     }
 }

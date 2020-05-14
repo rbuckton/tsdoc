@@ -1,45 +1,70 @@
 import { Block, IBlockParameters } from "./Block";
 import { SyntaxKind } from "./SyntaxKind";
-import { Token } from "../parser/Token";
-import { TSDocPrinter } from "../parser/TSDocPrinter";
-import { StringUtils } from "../parser/utils/StringUtils";
-import { ContentUtils } from "./ContentUtils";
-import { Inline, IInlineContainer, IInlineContainerParameters } from "./Inline";
+import { ContentUtils } from "../utils/ContentUtils";
+import { IBlockSyntax } from "../syntax/IBlockSyntax";
+import { MarkdownHeadingSyntax } from "../syntax/commonmark/block/MarkdownHeadingSyntax";
+import { InlineContainerMixin, IInlineContainerParameters } from "./mixins/InlineContainerMixin";
+import { mixin } from "../mixin";
+import { BlockChildMixin } from "./mixins/BlockChildMixin";
+import { BlockSiblingMixin } from "./mixins/BlockSiblingMixin";
 
 export interface IMarkdownHeadingParameters extends IBlockParameters, IInlineContainerParameters {
-    headingToken: Token.Heading;
+    style: 'atx' | 'setext';
     level: number;
 }
 
-export class MarkdownHeading extends Block implements IInlineContainer {
-    private _headingToken: Token.Heading | undefined;
+export class MarkdownHeading extends mixin(Block, [
+    BlockChildMixin,
+    BlockSiblingMixin,
+    InlineContainerMixin,
+]) {
+    private _style: 'atx' | 'setext' | undefined;
     private _level: number | undefined;
 
     public constructor(parameters?: IMarkdownHeadingParameters) {
         super(parameters);
-        this._headingToken = parameters && parameters.headingToken;
+        this._style = parameters && parameters.style;
         this._level = parameters && parameters.level;
         ContentUtils.appendContent(this, parameters && parameters.content);
     }
 
-    /** @override */
+    /**
+     * {@inheritDoc Node.kind}
+     * @override
+     */
     public get kind(): SyntaxKind.MarkdownHeading {
         return SyntaxKind.MarkdownHeading;
     }
 
-    public get headingToken(): Token.Heading {
-        return this._headingToken || Token.AtxHeadingToken;
+    /**
+     * {@inheritDoc Node.syntax}
+     * @override
+     */
+    public get syntax(): IBlockSyntax<MarkdownHeading> {
+        return MarkdownHeadingSyntax;
     }
 
-    public set headingToken(value: Token.Heading) {
-        if (!Token.isHeading(value)) throw new RangeError("Argument out of range: value");
-        if (this.headingToken !== value) {
+    /**
+     * Gets or sets the TSDoc/markdown style for the heading.
+     */
+    public get style(): 'atx' | 'setext' {
+        return this._style || 'atx';
+    }
+
+    public set style(value: 'atx' | 'setext') {
+        value = value.toLowerCase() as 'atx' | 'setext';
+        if (value !== 'atx' && value !== 'setext') throw new RangeError("Argument out of range: value");
+        // TODO: If value is 'setext', 'level' must be either 1 or 2
+        if (this.style !== value) {
             this.beforeChange();
-            this._headingToken = value;
+            this._style = value;
             this.afterChange();
         }
     }
 
+    /**
+     * Gets or sets sets the heading level (1-6).
+     */
     public get level(): number {
         return this._level || 1;
     }
@@ -48,42 +73,11 @@ export class MarkdownHeading extends Block implements IInlineContainer {
         if (value < 1 || value > 6 || (value >>> 0) !== value) {
             throw new RangeError("Argument out of range: value");
         }
+        // TODO: if level is > 2, style cannot be setext.
         if (this.level !== value) {
             this.beforeChange();
             this._level = value;
             this.afterChange();
         }
-    }
-
-    /**
-     * Gets the first child of this node, if that child is an `Inline`.
-     */
-    public get firstChildInline(): Inline | undefined {
-        return this.firstChild && this.firstChild.isInline() ? this.firstChild : undefined;
-    }
-
-    /**
-     * Gets the last child of this node, if that child is an `Inline`.
-     */
-    public get lastChildInline(): Inline | undefined {
-        return this.lastChild && this.lastChild.isInline() ? this.lastChild : undefined;
-    }
-
-    /** @override */
-    public isInlineContainer(): true {
-        return true;
-    }
-
-    /** @override */
-    protected print(printer: TSDocPrinter): void {
-        if (this.headingToken === Token.AtxHeadingToken) {
-            printer.write(StringUtils.repeat('#', this.level));
-            printer.write(' ');
-            this.printChildren(printer);
-        } else {
-            this.printChildren(printer);
-            printer.write(this.headingToken === Token.MinusSetextHeadingToken ? '---' : '===');
-        }
-        printer.writeln();
     }
 }

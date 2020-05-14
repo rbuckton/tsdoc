@@ -1,18 +1,9 @@
 import { INodeParameters } from "./Node";
-import { Block } from "./Block";
+// import { Block } from "./Block";
 import { Content, IContentParameters } from "./Content";
+import { IInlineSyntax } from "../syntax/IInlineSyntax";
 
 export interface IInlineParameters extends IContentParameters {
-}
-
-export interface IInlineContainer extends Content {
-    isInlineContainer(): true;
-    readonly firstChildInline: Inline | undefined;
-    readonly lastChildInline: Inline | undefined;
-}
-
-export interface IInlineContainerParameters {
-    content?: Inline | ReadonlyArray<Inline> | string;
 }
 
 export abstract class Inline extends Content {
@@ -24,48 +15,13 @@ export abstract class Inline extends Content {
     }
 
     /**
-     * Gets the parent of this node, if that parent is a `Block`.
+     * {@inheritDoc Node.syntax}
+     * @override
      */
-    public get parentBlock(): Block | undefined {
-        return this.parent && this.parent.isBlock() ? this.parent : undefined;
-    }
+    public abstract get syntax(): IInlineSyntax;
 
     /**
-     * Gets the parent of this node, if that parent is an `Inline`.
-     */
-    public get parentInline(): Inline | undefined {
-        return this.parent && this.parent.isInline() ? this.parent : undefined;
-    }
-
-    /**
-     * Gets the previous sibling of this node, if that sibling is an `Inline`.
-     */
-    public get previousSiblingInline(): Inline | undefined {
-        return this.previousSibling && this.previousSibling.isInline() ? this.previousSibling : undefined;
-    }
-
-    /**
-     * Gets the next sibling of this node, if that sibling is an `Inline`.
-     */
-    public get nextSiblingInline(): Inline | undefined {
-        return this.nextSibling && this.nextSibling.isInline() ? this.nextSibling : undefined;
-    }
-
-    /**
-     * Gets the first child of this node, if that child is an `Inline`.
-     */
-    public get firstChildInline(): Inline | undefined {
-        return this.firstChild && this.firstChild.isInline() ? this.firstChild : undefined;
-    }
-
-    /**
-     * Gets the last child of this node, if that child is an `Inline`.
-     */
-    public get lastChildInline(): Inline | undefined {
-        return this.lastChild && this.lastChild.isInline() ? this.lastChild : undefined;
-    }
-
-    /**
+     * {@inheritdoc Node.isInline()}
      * @override
      */
     public isInline(): true {

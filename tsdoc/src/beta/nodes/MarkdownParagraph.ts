@@ -1,45 +1,39 @@
 import { SyntaxKind } from "./SyntaxKind";
 import { Block, IBlockParameters } from "./Block";
-import { TSDocPrinter } from "../parser/TSDocPrinter";
-import { ContentUtils } from "./ContentUtils";
-import { Inline, IInlineContainer, IInlineContainerParameters } from "./Inline";
+import { ContentUtils } from "../utils/ContentUtils";
+import { IBlockSyntax } from "../syntax/IBlockSyntax";
+import { MarkdownParagraphSyntax } from "../syntax/commonmark/block/MarkdownParagraphSyntax";
+import { InlineContainerMixin, IInlineContainerParameters } from "./mixins/InlineContainerMixin";
+import { mixin } from "../mixin";
+import { BlockChildMixin } from "./mixins/BlockChildMixin";
+import { BlockSiblingMixin } from "./mixins/BlockSiblingMixin";
 
 export interface IMarkdownParagraphParameters extends IBlockParameters, IInlineContainerParameters {
 }
 
-export class MarkdownParagraph extends Block implements IInlineContainer {
+export class MarkdownParagraph extends mixin(Block, [
+    BlockChildMixin,
+    BlockSiblingMixin,
+    InlineContainerMixin,
+]) {
     public constructor(parameters?: IMarkdownParagraphParameters) {
         super(parameters);
         ContentUtils.appendContent(this, parameters && parameters.content);
     }
 
-    /** @override */
+    /**
+     * {@inheritDoc Node.kind}
+     * @override
+     */
     public get kind(): SyntaxKind.MarkdownParagraph {
         return SyntaxKind.MarkdownParagraph;
     }
 
     /**
-     * Gets the first child of this node, if that child is an `Inline`.
+     * {@inheritDoc Node.syntax}
+     * @override
      */
-    public get firstChildInline(): Inline | undefined {
-        return this.firstChild && this.firstChild.isInline() ? this.firstChild : undefined;
-    }
-
-    /**
-     * Gets the last child of this node, if that child is an `Inline`.
-     */
-    public get lastChildInline(): Inline | undefined {
-        return this.lastChild && this.lastChild.isInline() ? this.lastChild : undefined;
-    }
-
-    /** @override */
-    public isInlineContainer(): true {
-        return true;
-    }
-
-    /** @override */
-    protected print(printer: TSDocPrinter): void {
-        this.printChildren(printer);
-        printer.writeln();
+    public get syntax(): IBlockSyntax<MarkdownParagraph> {
+        return MarkdownParagraphSyntax;
     }
 }

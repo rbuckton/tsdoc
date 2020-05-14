@@ -1,32 +1,33 @@
-import { Token } from "./Token";
-import { IInlineSyntaxParser } from "./inlineParsers/IInlineSyntaxParser";
-import { IDelimiterProcessor } from "./inlineParsers/IDelimiterProcessor";
-import { MarkdownLineBreakParser } from "./inlineParsers/MarkdownLineBreakParser";
-import { MarkdownCodeSpanParser } from "./inlineParsers/MarkdownCodeSpanParser";
-import { MarkdownBackslashEscapeParser } from "./inlineParsers/MarkdownBackslashEscapeParser";
-import { MarkdownDelimiterParser } from "./inlineParsers/MarkdownDelimiterParser";
-import { MarkdownLinkParser } from "./inlineParsers/MarkdownLinkParser";
-import { MarkdownAutoLinkParser } from "./inlineParsers/MarkdownAutoLinkParser";
-import { MarkdownHtmlInlineParser } from "./inlineParsers/MarkdownHtmlInlineParser";
-import { MarkdownCharacterEntityParser } from "./inlineParsers/MarkdownCharacterEntityParser";
-import { Inline, IInlineContainer } from "../nodes/Inline";
+import { Token, TokenLike } from "./Token";
+import { IInlineSyntax } from "../syntax/IInlineSyntax";
+import { MarkdownLineBreakSyntax } from "../syntax/commonmark/inline/MarkdownLineBreakSyntax";
+import { MarkdownCodeSpanSyntax } from "../syntax/commonmark/inline/MarkdownCodeSpanSyntax";
+import { MarkdownBackslashEscapeSyntax } from "../syntax/commonmark/inline/MarkdownBackslashEscapeSyntax";
+import { MarkdownEmphasisSyntax } from "../syntax/commonmark/inline/MarkdownEmphasisSyntax";
+import { MarkdownLinkSyntax } from "../syntax/commonmark/inline/MarkdownLinkSyntax";
+import { MarkdownAutoLinkSyntax } from "../syntax/commonmark/inline/MarkdownAutoLinkSyntax";
+import { MarkdownCharacterEntitySyntax } from "../syntax/commonmark/inline/MarkdownCharacterEntitySyntax";
+import { Inline } from "../nodes/Inline";
 import { Run } from "../nodes/Run";
 import { MarkdownLinkReference } from "../nodes/MarkdownLinkReference";
 import { IMapping } from "./Mapper";
-import { MarkdownLinkReferenceParser } from "./inlineParsers/MarkdownLinkReferenceParser";
+import { MarkdownLinkReferenceSyntax } from "../syntax/commonmark/inline/MarkdownLinkReferenceSyntax";
 import { ParserBase } from "./ParserBase";
 import { Content } from "../nodes/Content";
 import { Document } from "../nodes/Document";
 import { MarkdownHardBreak } from "../nodes/MarkdownHardBreak";
 import { MarkdownSoftBreak } from "../nodes/MarkdownSoftBreak";
-import { GfmStrikethroughParser } from "./inlineParsers/GfmStrikethroughParser";
-import { GfmAutoLinkParser } from "./inlineParsers/GfmAutoLinkParser";
+import { GfmStrikethroughSyntax } from "../syntax/gfm/inline/GfmStrikethroughSyntax";
+import { GfmAutoLinkSyntax } from "../syntax/gfm/inline/GfmAutoLinkSyntax";
+import { MarkdownHtmlSyntax } from "../syntax/commonmark/block/MarkdownHtmlSyntax";
+import { IDelimiterProcessor } from "../syntax/IDelimiterProcessor";
+import { IInlineContainer } from "../nodes/mixins/InlineContainerMixin";
 
 export interface IDelimiterFrame {
     prev?: IDelimiterFrame;
     next?: IDelimiterFrame;
     readonly node: Run;
-    readonly token: Token;
+    readonly token: TokenLike;
     readonly count: number;
     readonly canOpen: boolean;
     readonly canClose: boolean;
@@ -38,45 +39,36 @@ export interface IBracketFrame {
     hasBracketAfter?: boolean;
     delimiters?: IDelimiterFrame;
     readonly node: Run;
-    readonly token: Token;
+    readonly token: TokenLike;
     active: boolean;
 }
 
 export class InlineParser extends ParserBase {
     private _document: Document;
-    private _delimiterTokens: Set<Token> = new Set();
+    private _delimiterTokens: Map<TokenLike, Set<IDelimiterProcessor>> = new Map();
     private _delimiters: IDelimiterFrame | undefined;
     private _brackets: IBracketFrame | undefined;
-    private _inlineSyntaxParsers: IInlineSyntaxParser<Inline>[];
-    private _delimiterProcessors: IDelimiterProcessor[];
+    private _inlineSyntaxParsers: IInlineSyntax[];
 
     public constructor(document: Document, text: string, sourceMappings: ReadonlyArray<IMapping> | undefined, gfm: boolean) {
         super(text.replace(/\s+$/, ''), sourceMappings);
         this._document = document;
         this._inlineSyntaxParsers = InlineParser.getDefaultInlineSyntaxParsers(gfm);
-        this._delimiterProcessors = InlineParser.getDefaultDelimiterParsers(gfm);
         this.scanner.scan();
     }
 
-    public static getDefaultInlineSyntaxParsers(gfm: boolean): IInlineSyntaxParser<Inline>[] {
+    public static getDefaultInlineSyntaxParsers(gfm: boolean): IInlineSyntax[] {
         return [
-            MarkdownLineBreakParser,
-            MarkdownBackslashEscapeParser,
-            MarkdownCodeSpanParser,
-            MarkdownDelimiterParser,
-            ...(gfm ? [GfmStrikethroughParser] : []),
-            MarkdownLinkParser,
-            ...(gfm ? [GfmAutoLinkParser] : []),
-            MarkdownAutoLinkParser,
-            MarkdownHtmlInlineParser,
-            MarkdownCharacterEntityParser,
-        ];
-    }
-
-    public static getDefaultDelimiterParsers(gfm: boolean): IDelimiterProcessor[] {
-        return [
-            MarkdownDelimiterParser,
-            ...(gfm ? [GfmStrikethroughParser] : [])
+            MarkdownLineBreakSyntax,
+            MarkdownBackslashEscapeSyntax,
+            MarkdownCodeSpanSyntax,
+            MarkdownEmphasisSyntax,
+            ...(gfm ? [GfmStrikethroughSyntax] : []),
+            MarkdownLinkSyntax,
+            ...(gfm ? [GfmAutoLinkSyntax] : []),
+            MarkdownAutoLinkSyntax,
+            MarkdownHtmlSyntax,
+            MarkdownCharacterEntitySyntax,
         ];
     }
 
@@ -84,7 +76,7 @@ export class InlineParser extends ParserBase {
         return this._document;
     }
 
-    public parse(block: IInlineContainer): void {
+    public parse(block: IInlineContainer & Content): void {
         let lastRun: Run | undefined;
         while (this.scanner.token() !== Token.EndOfFileToken) {
             const inline: Inline | undefined = this._parseInline(block);
@@ -112,7 +104,7 @@ export class InlineParser extends ParserBase {
 
     private _parseInline(parent: IInlineContainer): Inline | undefined {
         for (const inlineSyntaxParser of this._inlineSyntaxParsers) {
-            const inline: Inline | undefined = this.tryParse(inlineSyntaxParser.tryParse, parent);
+            const inline: Inline | undefined = this.tryParse(inlineSyntaxParser.tryParseInline, parent);
             if (inline) {
                 return inline;
             }
@@ -121,9 +113,9 @@ export class InlineParser extends ParserBase {
     }
 
     public processDelimiters(stackBottom: IDelimiterFrame | undefined): void {
-        const openersBottom: Array<IDelimiterFrame | undefined>[] = [[], [], []];
+        const openersBottom: Map<TokenLike, IDelimiterFrame | undefined>[] = [new Map(), new Map(), new Map()];
         for (const openers of openersBottom) {
-            this._delimiterTokens.forEach(token => { openers[token] = stackBottom; });
+            this._delimiterTokens.forEach((_, token) => { openers.set(token, stackBottom); });
         }
 
         // find first closer above stack_bottom:
@@ -141,10 +133,10 @@ export class InlineParser extends ParserBase {
             }
 
             // found emphasis closer. now look back for first matching opener:
-            const closerToken: Token = closer.token;
+            const closerToken: TokenLike = closer.token;
             let openerFound: boolean = false;
             opener = closer.prev;
-            while (opener && opener !== stackBottom && opener !== openersBottom[closer.count % 3][closerToken]) {
+            while (opener && opener !== stackBottom && opener !== openersBottom[closer.count % 3].get(closerToken)) {
                 if (opener.token === closer.token && opener.canOpen) {
                     const oddMatch: boolean =
                         (closer.canOpen || opener.canClose) &&
@@ -160,12 +152,17 @@ export class InlineParser extends ParserBase {
 
             const oldCloser: IDelimiterFrame = closer;
             let processed: boolean = false;
-            for (const processor of this._delimiterProcessors) {
-                const result: IDelimiterFrame | "not-processed" | undefined = processor.processDelimiter(this, openerFound ? opener : undefined, closer);
-                if (result !== "not-processed") {
-                    closer = result;
-                    processed = true;
-                    break;
+            const processors = this._delimiterTokens.get(closer.token);
+            if (processors) {
+                for (const processor of Array.from(processors)) {
+                    if (processor.processDelimiter) {
+                        const result: IDelimiterFrame | "not-processed" | undefined = processor.processDelimiter(this, openerFound ? opener : undefined, closer);
+                        if (result !== "not-processed") {
+                            closer = result;
+                            processed = true;
+                            break;
+                        }
+                    }
                 }
             }
             if (!processed) {
@@ -173,7 +170,7 @@ export class InlineParser extends ParserBase {
             }
             if (!openerFound) {
                 // Set lower bound for future searches for openers:
-                openersBottom[oldCloser.count % 3][closerToken] = oldCloser.prev;
+                openersBottom[oldCloser.count % 3].set(closerToken, oldCloser.prev);
                 if (!oldCloser.canOpen) {
                     // We can remove a closer that can't be an opener,
                     // once we've seen there's no matching opener:
@@ -190,20 +187,29 @@ export class InlineParser extends ParserBase {
 
     public parseReferences(): MarkdownLinkReference[] {
         const linkReferences: MarkdownLinkReference[] = [];
-        let linkReference: MarkdownLinkReference | undefined = this.tryParse(MarkdownLinkReferenceParser.tryParse);
+        let linkReference: MarkdownLinkReference | undefined = this.tryParse(MarkdownLinkReferenceSyntax.tryParse);
         while (linkReference) {
             linkReferences.push(linkReference);
-            linkReference = this.tryParse(MarkdownLinkReferenceParser.tryParse);
+            linkReference = this.tryParse(MarkdownLinkReferenceSyntax.tryParse);
         }
         return linkReferences;
     }
 
     public tryParse<A extends any[], T>(cb: (parser: InlineParser, ...args: A) => T | undefined, ...args: A): T | undefined {
-        return this.scanner.speculate(/*lookAhead*/ false, cb.bind(undefined, this), ...args);
+        return this.scanner.speculate(/*lookAhead*/ false, InlineParser._tryParse, cb, this, args);
     }
 
-    public pushDelimiter(node: Run, token: Token, count: number, canOpen: boolean, canClose: boolean): void {
-        this._delimiterTokens.add(token);
+    private static _tryParse<A extends any[], T>(cb: (parser: InlineParser, ...args: A) => T | undefined, parser: InlineParser, args: A): T | undefined {
+        return cb(parser, ...args);
+    }
+
+    public pushDelimiter(processor: IDelimiterProcessor, node: Run, token: TokenLike, count: number, canOpen: boolean, canClose: boolean): void {
+        let processors: Set<IDelimiterProcessor> | undefined = this._delimiterTokens.get(token);
+        if (!processors) {
+            processors = new Set();
+            this._delimiterTokens.set(token, processors);
+        }
+        processors.add(processor);
         this._delimiters = {
             prev: this._delimiters,
             next: undefined,
@@ -239,7 +245,7 @@ export class InlineParser extends ParserBase {
         return this._brackets;
     }
 
-    public pushBracket(node: Run, token: Token): void {
+    public pushBracket(node: Run, token: TokenLike): void {
         this._brackets = {
             prev: this._brackets,
             hasBracketAfter: false,

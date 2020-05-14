@@ -35,7 +35,10 @@
     "build": "node ./build.js",
     "test": "jest",
     "watch": "jest --watch",
-    "lint": "eslint -f unix \"src/**/*.{ts,tsx}\""
+    "lint": "eslint -f unix \"src/**/*.{ts,tsx}\"",
+    "generate-commonmark-tests": "node ./scripts/generateTests.js scripts/spec_commonmark.json src/beta/parser/__tests__/commonmark.test.ts",
+    "generate-gfm-tests": "node ./scripts/generateTests.js scripts/spec_gfm.json src/beta/parser/__tests__/gfm.test.ts --gfm",
+    "generate-tests": "npm run generate-commonmark-tests && npm run generate-gfm-tests"
   },
   "jest": {
     "moduleFileExtensions": [

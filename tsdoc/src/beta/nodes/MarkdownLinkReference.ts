@@ -2,10 +2,13 @@ import { SyntaxKind } from "./SyntaxKind";
 import { MarkdownLinkLabel } from "./MarkdownLinkLabel";
 import { MarkdownLinkDestination } from "./MarkdownLinkDestination";
 import { MarkdownLinkTitle } from "./MarkdownLinkTitle";
-import { Syntax } from "./Syntax";
+import { SyntaxElement } from "./SyntaxElement";
 import { Block, IBlockParameters } from "./Block";
-import { TSDocPrinter } from "../parser/TSDocPrinter";
-import { Node } from "./Node";
+import { IBlockSyntax } from "../syntax/IBlockSyntax";
+import { MarkdownLinkReferenceSyntax } from "../syntax/commonmark/inline/MarkdownLinkReferenceSyntax";
+import { mixin } from "../mixin";
+import { BlockChildMixin } from "./mixins/BlockChildMixin";
+import { BlockSiblingMixin } from "./mixins/BlockSiblingMixin";
 
 export interface IMarkdownLinkReferenceParameters extends IBlockParameters {
     label?: MarkdownLinkLabel | string;
@@ -13,7 +16,10 @@ export interface IMarkdownLinkReferenceParameters extends IBlockParameters {
     title?: MarkdownLinkTitle | string;
 }
 
-export class MarkdownLinkReference extends Block {
+export class MarkdownLinkReference extends mixin(Block, [
+    BlockChildMixin,
+    BlockSiblingMixin,
+]) {
     private _labelSyntax: MarkdownLinkLabel;
     private _destinationSyntax: MarkdownLinkDestination;
     private _titleSyntax: MarkdownLinkTitle | undefined;
@@ -33,12 +39,24 @@ export class MarkdownLinkReference extends Block {
     }
 
     /**
+     * {@inheritDoc Node.kind}
      * @override
      */
     public get kind(): SyntaxKind.MarkdownLinkReference {
         return SyntaxKind.MarkdownLinkReference;
     }
 
+    /**
+     * {@inheritDoc Node.syntax}
+     * @override
+     */
+    public get syntax(): IBlockSyntax<MarkdownLinkReference> {
+        return MarkdownLinkReferenceSyntax;
+    }
+
+    /**
+     * Gets or sets the label for the reference.
+     */
     public get label(): string {
         return this._labelSyntax.text;
     }
@@ -47,6 +65,9 @@ export class MarkdownLinkReference extends Block {
         this._labelSyntax.text = value;
     }
 
+    /**
+     * Gets or sets the destination for the reference.
+     */
     public get destination(): string {
         return this._destinationSyntax.text;
     }
@@ -55,6 +76,9 @@ export class MarkdownLinkReference extends Block {
         this._destinationSyntax.text = value;
     }
 
+    /**
+     * Gets or sets the title for the reference.
+     */
     public get title(): string | undefined {
         return this._titleSyntax && this._titleSyntax.text;
     }
@@ -77,9 +101,12 @@ export class MarkdownLinkReference extends Block {
         }
     }
 
-    /** @override */
-    public getSyntax(): ReadonlyArray<Syntax> {
-        const syntax: Syntax[] = [
+    /**
+     * {@inheritDoc Node.getSyntaxElements()}
+     * @override
+     */
+    public getSyntaxElements(): ReadonlyArray<SyntaxElement> {
+        const syntax: SyntaxElement[] = [
             this._labelSyntax,
             this._destinationSyntax
         ];
@@ -87,16 +114,5 @@ export class MarkdownLinkReference extends Block {
             syntax.push(this._titleSyntax);
         }
         return syntax;
-    }
-
-    /** @override */
-    protected print(printer: TSDocPrinter): void {
-        Node._printNode(printer, this._labelSyntax);
-        printer.write(': ');
-        Node._printNode(printer, this._destinationSyntax);
-        if (this._titleSyntax) {
-            printer.write(' ');
-            Node._printNode(printer, this._titleSyntax);
-        }
     }
 }

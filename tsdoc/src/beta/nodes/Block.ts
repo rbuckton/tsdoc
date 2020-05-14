@@ -1,17 +1,7 @@
 import { Content, IContentParameters } from "./Content";
-import { Inline } from "./Inline";
+import { IBlockSyntax } from "../syntax/IBlockSyntax";
 
 export interface IBlockParameters extends IContentParameters {
-}
-
-export interface IBlockContainer extends Content {
-    isBlockContainer(): true;
-    readonly firstChildBlock: Block | undefined;
-    readonly lastChildBlock: Block | undefined;
-}
-
-export interface IBlockContainerParameters {
-    content?: string | Inline | Block | ReadonlyArray<string | Inline | Block>;
 }
 
 export abstract class Block extends Content {
@@ -23,53 +13,10 @@ export abstract class Block extends Content {
     }
 
     /**
-     * Gets the parent node of this node if that parent is a `Block`.
+     * {@inheritDoc Node.syntax}
+     * @override
      */
-    public get parentBlock(): Block | undefined {
-        return this.parent && this.parent.isBlock() ? this.parent : undefined;
-    }
-
-    /**
-     * Gets the previous sibling of this node if that sibling is a `Block`.
-     */
-    public get previousSiblingBlock(): Block | undefined {
-        return this.previousSibling && this.previousSibling.isBlock() ? this.previousSibling : undefined;
-    }
-
-    /**
-     * Gets the next sibling of this node if that sibling is a `Block`.
-     */
-    public get nextSiblingBlock(): Block | undefined {
-        return this.nextSibling && this.nextSibling.isBlock() ? this.nextSibling : undefined;
-    }
-
-    /**
-     * Gets the first of this node if that child is a `Block`.
-     */
-    public get firstChildBlock(): Block | undefined {
-        return this.firstChild && this.firstChild.isBlock() ? this.firstChild : undefined;
-    }
-
-    /**
-     * Gets the first of this node if that child is an `Inline`.
-     */
-    public get firstChildInline(): Inline | undefined {
-        return this.firstChild && this.firstChild.isInline() ? this.firstChild : undefined;
-    }
-
-    /**
-     * Gets the last of this node if that child is a `Block`.
-     */
-    public get lastChildBlock(): Block | undefined {
-        return this.lastChild && this.lastChild.isBlock() ? this.lastChild : undefined;
-    }
-
-    /**
-     * Gets the last of this node if that child is an `Inline`.
-     */
-    public get lastChildInline(): Inline | undefined {
-        return this.lastChild && this.lastChild.isInline() ? this.lastChild : undefined;
-    }
+    public abstract get syntax(): IBlockSyntax<Block>;
 
     /**
      * @override

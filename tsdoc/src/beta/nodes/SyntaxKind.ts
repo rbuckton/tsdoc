@@ -1,3 +1,8 @@
+export type SyntaxKindLike = 
+    | SyntaxKind
+    | symbol
+    ;
+
 export enum SyntaxKind {
     Unknown,
 

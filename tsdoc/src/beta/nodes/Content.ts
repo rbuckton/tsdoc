@@ -1,9 +1,16 @@
 import { INodeParameters, Node } from "./Node";
-import { TSDocPrinter } from "../parser/TSDocPrinter";
+import { AbstractConstructor, PropertiesOf } from "../mixin";
 
 export interface IContentParameters extends INodeParameters {
 }
 
+export interface IContentConstructor extends AbstractConstructor<Content>, PropertiesOf<typeof Content> {
+}
+
+/**
+ * A Content node represents a {@link Node} that defines document structure. Content nodes
+ * may have other {@link Content} nodes as siblings or children.
+ */
 export abstract class Content extends Node {
     // @ts-ignore
     private _contentBrand: never;
@@ -20,7 +27,8 @@ export abstract class Content extends Node {
      * Gets the parent of this node if that parent is a `Content`.
      */
     public get parentContent(): Content | undefined {
-        return this.parent && this.parent.isContent() ? this.parent : undefined;
+        const parent: Node | undefined = this.parent;
+        return parent && parent.isContent() ? parent : undefined;
     }
 
     /**
@@ -51,13 +59,16 @@ export abstract class Content extends Node {
         return this._lastChild;
     }
 
-    /** @override */
+    /**
+     * {@inheritDoc Node.isContent()}
+     * @override
+     */
     public isContent(): true {
         return true;
     }
 
     /**
-     * Appends a node as a child of this node.
+     * Appends a node as the last child of this node.
      * @returns `true` if the child was appended; otherwise, `false`.
      */
     public appendChild(child: Content): boolean {
@@ -92,11 +103,10 @@ export abstract class Content extends Node {
      * @returns `true` if the sibling was inserted; otherwise, `false`.
      */
     public insertSiblingBefore(newSibling: Content): boolean {
-        if (!this.parent ||
-            !this.parent.isContent() ||
-            !this.parent.canHaveChild(newSibling) ||
-            !newSibling.isContent() ||
-            !newSibling.canHaveParent(this.parent)) {
+        const parent: Content | undefined = this.parentContent;
+        if (!parent ||
+            !parent.canHaveChild(newSibling) ||
+            !newSibling.canHaveParent(parent)) {
             return false;
         }
         newSibling.removeNode();
@@ -108,7 +118,7 @@ export abstract class Content extends Node {
         newSibling._nextSibling = this;
         newSibling._setParent(this.parent);
         if (!newSibling._previousSibling) {
-            this.parent._firstChild = newSibling;
+            parent._firstChild = newSibling;
         }
         return true;
     }
@@ -118,11 +128,10 @@ export abstract class Content extends Node {
      * @returns `true` if the sibling was inserted; otherwise, `false`.
      */
     public insertSiblingAfter(newSibling: Content): boolean {
-        if (!this.parent ||
-            !this.parent.isContent() ||
-            !this.parent.canHaveChild(newSibling) ||
-            !newSibling.isContent() ||
-            !newSibling.canHaveParent(this.parent)) {
+        const parent: Content | undefined = this.parentContent;
+        if (!parent ||
+            !parent.canHaveChild(newSibling) ||
+            !newSibling.canHaveParent(parent)) {
             return false;
         }
         newSibling.removeNode();
@@ -134,7 +143,7 @@ export abstract class Content extends Node {
         newSibling._previousSibling = this;
         newSibling._setParent(this.parent);
         if (!newSibling._nextSibling) {
-            this.parent._lastChild = newSibling;
+            parent._lastChild = newSibling;
         }
         return true;
     }
@@ -155,16 +164,17 @@ export abstract class Content extends Node {
      * @override
      */
     public removeNode(): void {
-        if (this.parent && this.parent.isContent()) {
+        const parent: Content | undefined = this.parentContent;
+        if (parent) {
             if (this._previousSibling) {
                 this._previousSibling._nextSibling = this._nextSibling;
-            } else if (this.parent && this.parent._firstChild === this) {
-                this.parent._firstChild = this._nextSibling;
+            } else if (parent && parent._firstChild === this) {
+                parent._firstChild = this._nextSibling;
             }
             if (this._nextSibling) {
                 this._nextSibling._previousSibling = this._previousSibling;
-            } else if (this.parent && this.parent._lastChild === this) {
-                this.parent._lastChild = this._previousSibling;
+            } else if (parent && parent._lastChild === this) {
+                parent._lastChild = this._previousSibling;
             }
         }
         this._previousSibling = undefined;
@@ -173,20 +183,23 @@ export abstract class Content extends Node {
     }
 
     /**
-     * Iterates through each syntactic and content element of this node.
-     * @param cb The callback to execute for each node. If the callback returns a value other than `undefined`, iteration
-     * stops and that value is returned.
-     *
+     * Iterates through each syntactic and content element of this node. If the callback
+     * returns a value other than `undefined`, iteration stops and that value is returned.
+     * @param cb The callback to execute.
+     * @param args The arguments to pass to the callback.
+     * @returns The first non-`undefined` result returned by the callback; otherwise, `undefined`.
      * @override
      */
     public forEachNode<A extends any[], T>(cb: (node: Node, ...args: A) => T | undefined, ...args: A): T | undefined {
-        return this.forEachSyntax(cb, ...args) || this.forEachChild(cb, ...args);
+        return this.forEachSyntaxElement(cb, ...args) || this.forEachChild(cb, ...args);
     }
 
     /**
-     * Iterates through each content child of this node.
-     * @param cb The callback to execute for each node. If the callback returns a value other than `undefined`, iteration
-     * stops and that value is returned.
+     * Iterates through each content child of this node. If the callback
+     * returns a value other than `undefined`, iteration stops and that value is returned.
+     * @param cb The callback to execute.
+     * @param args The arguments to pass to the callback.
+     * @returns The first non-`undefined` result returned by the callback; otherwise, `undefined`.
      */
     public forEachChild<A extends any[], T>(cb: (node: Content, ...args: A) => T | undefined, ...args: A): T | undefined {
         let child: Content | undefined = this._firstChild;
@@ -199,11 +212,5 @@ export abstract class Content extends Node {
             child = next;
         }
         return undefined;
-    }
-
-    protected abstract print(printer: TSDocPrinter): void;
-
-    protected printChildren(printer: TSDocPrinter): void {
-        this.forEachChild(child => child.print(printer));
     }
 }

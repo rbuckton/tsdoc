@@ -1,17 +1,23 @@
 import { SyntaxKind } from "./SyntaxKind";
-import { Node, DocumentPosition } from "./Node";
-import { Block, IBlockParameters, IBlockContainer, IBlockContainerParameters } from "./Block";
+import { Node } from "./Node";
+import { Block, IBlockParameters } from "./Block";
 import { MarkdownLinkReference } from "./MarkdownLinkReference";
-import { MarkdownUtils } from "../parser/utils/MarkdownUtils";
+import { MarkdownUtils } from "../utils/MarkdownUtils";
 import { MarkdownLinkLabel } from "./MarkdownLinkLabel";
-import { TSDocPrinter } from "../parser/TSDocPrinter";
-import { ContentUtils } from "./ContentUtils";
+import { ContentUtils } from "../utils/ContentUtils";
+import { IBlockSyntax } from "../syntax/IBlockSyntax";
+import { DocumentSyntax } from "../syntax/tsdoc/block/DocumentSyntax";
+import { DocumentPosition } from "./DocumentPosition";
+import { IBlockContainerParameters, BlockContainerMixin } from "./mixins/BlockContainerMixin";
+import { mixin } from "../mixin";
 
 export interface IDocumentParameters extends IBlockParameters, IBlockContainerParameters {
     text?: string;
 }
 
-export class Document extends Block implements IBlockContainer {
+export class Document extends mixin(Block, [
+    BlockContainerMixin,
+]) {
     private _text: string | undefined;
     private _referenceMap = new Map<string, MarkdownLinkReference>();
     private _allReferences = new Map<string, MarkdownLinkReference[]>();
@@ -22,37 +28,50 @@ export class Document extends Block implements IBlockContainer {
         ContentUtils.appendContent(this, parameters && parameters.content);
     }
 
-    /** @override */
+    /**
+     * {@inheritDoc Node.kind}
+     * @override
+     */
     public get kind(): SyntaxKind.Document {
         return SyntaxKind.Document;
     }
 
+    /**
+     * {@inheritDoc Node.syntax}
+     * @override
+     */
+    public get syntax(): IBlockSyntax<Document> {
+        return DocumentSyntax;
+    }
+
+    /**
+     * Gets the source text of the document.
+     */
     public get text(): string | undefined {
         return this._text;
     }
 
+    /**
+     * Gets the map of labels to {@link MarkdownLinkReference} nodes in this document.
+     */
     public get referenceMap(): ReadonlyMap<string, MarkdownLinkReference> {
         return this._referenceMap;
     }
 
-    /** @override */
-    public isBlockContainer(): true {
-        return true;
-    }
-
-    /** @override */
+    /**
+     * {@inheritDoc Node.isDocument()}
+     * @override
+     */
     public isDocument(): true {
         return true;
     }
 
-    /** @override */
+    /**
+     * {@inheritdoc Node.canHaveParent()}
+     * @override
+     */
     public canHaveParent(node: Node): false {
         return false;
-    }
-
-    /** @override */
-    public canHaveChild(node: Node): boolean {
-        return node.isBlock();
     }
 
     private static _compareReferences(x: MarkdownLinkReference, y: MarkdownLinkReference): number {
@@ -99,21 +118,32 @@ export class Document extends Block implements IBlockContainer {
         }
     }
 
-    /** @override */
-    protected onNodeAttached(node: Node): void {
+    /**
+     * {@inheritdoc Node._onNodeAttached()}
+     * @internal
+     * @override
+     */
+    protected _onNodeAttached(node: Node): void {
         if (node instanceof MarkdownLinkReference) {
             this._attachLinkReference(node);
         }
     }
 
-    /** @override */
-    protected onNodeDetached(node: Node): void {
+    /**
+     * {@inheritdoc Node._onNodeDetached()}
+     * @internal
+     * @override
+     */
+    protected _onNodeDetached(node: Node): void {
         if (node instanceof MarkdownLinkReference) {
             this._detachLinkReference(node);
         }
     }
 
-    /** @override */
+    /**
+     * {@inheritdoc Node.onNodeChanging()}
+     * @override
+     */
     protected onNodeChanging(node: Node): void {
         if (node instanceof MarkdownLinkReference) {
             this._detachLinkReference(node);
@@ -122,7 +152,10 @@ export class Document extends Block implements IBlockContainer {
         }
     }
 
-    /** @override */
+    /**
+     * {@inheritdoc Node.onNodeChanged()}
+     * @override
+     */
     protected onNodeChanged(node: Node): void {
         if (node instanceof MarkdownLinkReference) {
             this._attachLinkReference(node);
@@ -131,12 +164,11 @@ export class Document extends Block implements IBlockContainer {
         }
     }
 
-    /** @override */
+    /**
+     * {@inheritdoc Node._setOwnerDocument()}
+     * @internal
+     * @override
+     */
     protected _setOwnerDocument(ownerDocument: Document | undefined): void {
-    }
-
-    /** @override */
-    protected print(printer: TSDocPrinter): void {
-        this.printChildren(printer);
     }
 }

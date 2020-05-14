@@ -63,6 +63,14 @@
       "end_line": 0,
       "section": "Tables (extension)"
     },
+    {
+      "markdown": "para\n| abc | def |\n| --- | --- |",
+      "html": "<p>para</p>\n<table>\n<thead>\n<tr>\n<th>abc</th>\n<th>def</th>\n</tr>\n</thead>\n</table>\n",
+      "custom": "Paragraph before table",
+      "start_line": 0,
+      "end_line": 0,
+      "section": "Tables (extension)"
+    },
 
     {
       "markdown": "- [ ] foo\n- [x] bar",

@@ -1,7 +1,7 @@
 import { Document } from "../Document"
 import { MarkdownParagraph } from "../MarkdownParagraph";
 import { Run } from "../Run";
-import { DocumentPosition } from "../Node";
+import { DocumentPosition } from "../DocumentPosition";
 
 describe('compareDocumentPositions', () => {
     it('contained by', () => {

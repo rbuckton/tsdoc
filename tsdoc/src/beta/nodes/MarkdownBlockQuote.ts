@@ -1,31 +1,39 @@
 import { SyntaxKind } from "./SyntaxKind";
-import { Block, IBlockParameters, IBlockContainerParameters, IBlockContainer } from "./Block";
-import { TSDocPrinter } from "../parser/TSDocPrinter";
-import { ContentUtils } from "./ContentUtils";
+import { Block, IBlockParameters } from "./Block";
+import { ContentUtils } from "../utils/ContentUtils";
+import { IBlockSyntax } from "../syntax/IBlockSyntax";
+import { MarkdownBlockQuoteSyntax } from "../syntax/commonmark/block/MarkdownBlockQuoteSyntax";
+import { BlockContainerMixin, IBlockContainerParameters } from "./mixins/BlockContainerMixin";
+import { mixin } from "../mixin";
+import { BlockChildMixin } from "./mixins/BlockChildMixin";
+import { BlockSiblingMixin } from "./mixins/BlockSiblingMixin";
 
 export interface IMarkdownBlockQuoteParameters extends IBlockParameters, IBlockContainerParameters {
 }
 
-export class MarkdownBlockQuote extends Block implements IBlockContainer {
+export class MarkdownBlockQuote extends mixin(Block, [
+    BlockChildMixin,
+    BlockSiblingMixin,
+    BlockContainerMixin
+]) {
     public constructor(parameters?: IMarkdownBlockQuoteParameters) {
         super(parameters);
         ContentUtils.appendContent(this, parameters && parameters.content);
     }
 
-    /** @override */
+    /**
+     * {@inheritDoc Node.kind}
+     * @override
+     */
     public get kind(): SyntaxKind.MarkdownBlockQuote {
         return SyntaxKind.MarkdownBlockQuote;
     }
 
-    /** @override */
-    public isBlockContainer(): true {
-        return true;
-    }
-
-    /** @override */
-    protected print(printer: TSDocPrinter): void {
-        printer.pushBlock({ linePrefix: '> ' });
-        this.printChildren(printer);
-        printer.popBlock();
+    /**
+     * {@inheritDoc Node.syntax}
+     * @override
+     */
+    public get syntax(): IBlockSyntax<MarkdownBlockQuote> {
+        return MarkdownBlockQuoteSyntax;
     }
 }

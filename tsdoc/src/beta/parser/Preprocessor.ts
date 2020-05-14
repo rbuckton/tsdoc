@@ -1,6 +1,6 @@
 import { CharacterCodes } from "./CharacterCodes";
-import { UnicodeUtils } from "./utils/UnicodeUtils";
-import { ArrayUtils } from "./utils/ArrayUtils";
+import { UnicodeUtils } from "../utils/UnicodeUtils";
+import { ArrayUtils } from "../utils/ArrayUtils";
 import { Mapper, IMapping } from "./Mapper";
 
 export type PeekExpectation = ((codePoint: number | undefined) => boolean) | number | undefined;

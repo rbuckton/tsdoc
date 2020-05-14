@@ -1,68 +1,80 @@
-import { SyntaxKind } from "./SyntaxKind";
-import { TSDocPrinter } from "../parser/TSDocPrinter";
+import { SyntaxKindLike } from "./SyntaxKind";
+import { DocumentPosition } from "./DocumentPosition";
+import { SyntaxDefinition } from "../syntax/SyntaxDefinition";
+import { AbstractConstructor, PropertiesOf } from "../mixin";
 
 // TODO: These should be type-only imports, but that requires TS 3.8
+// import type { Document } from "./Document";
 type Document = import("./Document").Document;
-type Syntax = import("./Syntax").Syntax;
-type Content = import("./Content").Content;
-type Block = import("./Block").Block;
-type IBlockContainer = import("./Block").IBlockParameters;
-type Inline = import("./Inline").Inline;
-type IInlineContainer = import("./Inline").IInlineContainer;
-type ListBase = import("./ListBase").ListBase;
-type ListItemBase = import("./ListItemBase").ListItemBase;
-type IListItemContainer = import("./ListItemBase").IListItemContainer;
-type LinkBase = import("./LinkBase").LinkBase;
-type TableBase = import("./TableBase").TableBase;
-type TableRowBase = import("./TableRowBase").TableRowBase;
-type ITableRowContainer = import("./TableRowBase").ITableRowContainer;
-type TableCellBase = import("./TableCellBase").TableCellBase;
-type ITableCellContainer = import("./TableCellBase").ITableCellContainer;
 
-declare const assignabilityHack: unique symbol;
+// import type { SyntaxElement } from "./SyntaxElement";
+type SyntaxElement = import("./SyntaxElement").SyntaxElement;
+
+// import type { Content } from "./Content";
+type Content = import("./Content").Content;
+
+// import type { Block } from "./Block";
+type Block = import("./Block").Block;
+
+// import type { IBlockContainer } from "./BlockContainerMixin";
+type IBlockContainer = import("./mixins/BlockContainerMixin").IBlockContainer;
+
+// import type { Inline } from "./Inline";
+type Inline = import("./Inline").Inline;
+
+// import type { IInlineContainer } from "./InlineContainerMixin";
+type IInlineContainer = import("./mixins/InlineContainerMixin").IInlineContainer;
+
+// import type { ListBase } from "./ListBase";
+type ListBase = import("./ListBase").ListBase;
+
+// import type { ListItemBase } from "./ListItemBase";
+type ListItemBase = import("./ListItemBase").ListItemBase;
+
+// import type { IListItemContainer } from "./ListItemContainerMixin";
+type IListItemContainer = import("./mixins/ListItemContainerMixin").IListItemContainer;
+
+// import type { LinkBase } from "./LinkBase";
+type LinkBase = import("./LinkBase").LinkBase;
+
+// import type { TableBase } from "./TableBase";
+type TableBase = import("./TableBase").TableBase;
+
+// import type { TableRowBase } from "./TableRowBase";
+type TableRowBase = import("./TableRowBase").TableRowBase;
+
+// import type { ITableRowContainer } from "./TableRowContainerMixin";
+type ITableRowContainer = import("./mixins/TableRowContainerMixin").ITableRowContainer;
+
+// import type { TableCellBase } from "./TableCellBase";
+type TableCellBase = import("./TableCellBase").TableCellBase;
+
+// import type { ITableCellContainer } from "./TableCellContainerMixin";
+type ITableCellContainer = import("./mixins/TableCellContainerMixin").ITableCellContainer;
 
 export interface INodeParameters {
+    /**
+     * Specifies the offset into the original source text at which this node starts.
+     */
     pos?: number;
+
+    /**
+     * Specifies the offset into the original source text at which this node ends.
+     */
     end?: number;
-
-    // ensures INodeParameters is not treated as an empty object.
-    [assignabilityHack]?: never;
-}
-
-export const enum DocumentPosition {
-    /**
-     * Indicates the provided node is the same as this node.
-     */
-    Same,
-    /**
-     * Indicates the nodes do not belong to the same document hierarchy.
-     */
-    Unrelated,
-    /**
-     * Indicates the provided node precedes (and does not contain) this node in the document hierarchy.
-     */
-    Preceding,
-    /**
-     * Indicates the provided node follows (and is not contained by) this node in the document hierarchy.
-     */
-    Following,
-    /**
-     * Indicates the provided node contains (and therefore also precedes) this node in the document hierarchy.
-     */
-    Contains,
-    /**
-     * Indicates the provided node is contained by (and therefore also follows) this node in the document hierarchy.
-     */
-    ContainedBy,
 }
 
 export interface INodeVersionSnapshot {
     matches(other: INodeVersionSnapshot): boolean;
 }
 
-export abstract class Node {
-    public abstract readonly kind: SyntaxKind;
+export interface INodeConstructor extends AbstractConstructor<Node>, PropertiesOf<typeof Node> {
+}
 
+/**
+ * Represents the base type for a TSDoc AST node.
+ */
+export abstract class Node {
     private _version: number = 0;
     private _pos: number;
     private _end: number;
@@ -75,6 +87,17 @@ export abstract class Node {
     }
 
     /**
+     * Gets the syntax kind for this node. The kind must either be one of the predefined
+     * values in {@link SyntaxKind}, or a user defined `symbol` for a custom kind.
+     */
+    public abstract get kind(): SyntaxKindLike;
+
+    /**
+     * Gets the {@link SyntaxDefinition} that defines this node, if one is available.
+     */
+    public abstract get syntax(): SyntaxDefinition;
+
+    /**
      * Gets or sets the offset into the original source text at which this node starts.
      */
     public get pos(): number {
@@ -82,7 +105,11 @@ export abstract class Node {
     }
 
     public set pos(value: number) {
-        this._pos = value;
+        if (this.pos !== value) {
+            this.beforeChange();
+            this._pos = value;
+            this.afterChange();
+        }
     }
 
     /**
@@ -93,7 +120,11 @@ export abstract class Node {
     }
 
     public set end(value: number) {
-        this._end = value;
+        if (this.end !== value) {
+            this.beforeChange();
+            this._end = value;
+            this.afterChange();
+        }
     }
 
     /**
@@ -111,7 +142,7 @@ export abstract class Node {
     }
 
     /**
-     * Indicates whether this node can contain `Block` nodes.
+     * Indicates whether this node can contain {@link Block} nodes.
      * @virtual
      */
     public isBlockContainer(): this is IBlockContainer {
@@ -154,7 +185,7 @@ export abstract class Node {
      * Indicates whether this node is a syntactic element.
      * @virtual
      */
-    public isSyntax(): this is Syntax {
+    public isSyntaxElement(): this is SyntaxElement {
         return false;
     }
 
@@ -183,7 +214,7 @@ export abstract class Node {
     }
 
     /**
-     * Indicates whether this node is document content.
+     * Indicates whether this node is a document.
      * @virtual
      */
     public isDocument(): this is Document {
@@ -355,22 +386,14 @@ export abstract class Node {
     }
 
     /**
-     * Iterates through each syntactic and content element of this node.
-     * @param cb The callback to execute for each node. If the callback returns a value other than `undefined`, iteration
-     * stops and that value is returned.
-     * @virtual
+     * Iterates through each syntactic element of this node. If the callback
+     * returns a value other than `undefined`, iteration stops and that value is returned.
+     * @param cb The callback to execute.
+     * @param args The arguments to pass to the callback.
+     * @returns The first non-`undefined` result returned by the callback; otherwise, `undefined`.
      */
-    public forEachNode<A extends any[], T>(cb: (node: Node, ...args: A) => T | undefined, ...args: A): T | undefined {
-        return this.forEachSyntax(cb, ...args);
-    }
-
-    /**
-     * Iterates through each syntactic element of this node.
-     * @param cb The callback to execute for each node. If the callback returns a value other than `undefined`, iteration
-     * stops and that value is returned.
-     */
-    public forEachSyntax<A extends any[], T>(cb: (node: Syntax, ...args: A) => T | undefined, ...args: A): T | undefined {
-        for (const syntax of this.getSyntax()) {
+    public forEachSyntaxElement<A extends any[], T>(cb: (node: SyntaxElement, ...args: A) => T | undefined, ...args: A): T | undefined {
+        for (const syntax of this.getSyntaxElements()) {
             const result: T | undefined = cb(syntax, ...args);
             if (result !== undefined) {
                 return result;
@@ -380,9 +403,21 @@ export abstract class Node {
     }
 
     /**
-     * Attaches a `Syntax` node (or an array of `Syntax` nodes) to this element.
+     * Iterates through each syntactic and content element of this node. If the callback
+     * returns a value other than `undefined`, iteration stops and that value is returned.
+     * @param cb The callback to execute.
+     * @param args The arguments to pass to the callback.
+     * @returns The first non-`undefined` result returned by the callback; otherwise, `undefined`.
+     * @virtual
      */
-    protected attachSyntax(node: Syntax | ReadonlyArray<Syntax> | undefined): void {
+    public forEachNode<A extends any[], T>(cb: (node: Node, ...args: A) => T | undefined, ...args: A): T | undefined {
+        return this.forEachSyntaxElement(cb, ...args);
+    }
+
+    /**
+     * Attaches a {@link SyntaxElement} node (or an array of {@link SyntaxElement} nodes) to this element.
+     */
+    protected attachSyntax(node: SyntaxElement | ReadonlyArray<SyntaxElement> | undefined): void {
         if ((Array.isArray as (value: unknown) => value is ReadonlyArray<unknown>)(node)) {
             for (const element of node) {
                 this.attachSyntax(element);
@@ -390,7 +425,7 @@ export abstract class Node {
             return;
         }
         if (node) {
-            if (!node.isSyntax()) {
+            if (!node.isSyntaxElement()) {
                 throw new TypeError("Node was not a syntax element.");
             }
             node.removeNode();
@@ -399,9 +434,9 @@ export abstract class Node {
     }
 
     /**
-     * Detaches a `Syntax` node (or an array of `Syntax` nodes) from this element.
+     * Detaches a {@link SyntaxElement} node (or an array of {@link SyntaxElement} nodes) from this element.
      */
-    protected detachSyntax(node: Syntax | ReadonlyArray<Syntax> | undefined): void {
+    protected detachSyntax(node: SyntaxElement | ReadonlyArray<SyntaxElement> | undefined): void {
         if ((Array.isArray as (value: unknown) => value is ReadonlyArray<unknown>)(node)) {
             for (const element of node) {
                 this.detachSyntax(element);
@@ -409,7 +444,7 @@ export abstract class Node {
             return;
         }
         if (node) {
-            if (!node.isSyntax()) {
+            if (!node.isSyntaxElement()) {
                 throw new TypeError("Node was not a syntax element.");
             }
             if (node.parent === this) {
@@ -419,10 +454,10 @@ export abstract class Node {
     }
 
     /**
-     * Gets the {@link Syntax} nodes for this node.
+     * Gets the {@link SyntaxElement} nodes for this node.
      * @virtual
      */
-    public getSyntax(): ReadonlyArray<Syntax> {
+    public getSyntaxElements(): ReadonlyArray<SyntaxElement> {
         return [];
     }
 
@@ -465,14 +500,14 @@ export abstract class Node {
 
     /**
      * When overridden in a derived class, handles operations that should trigger when a child node
-     * (either {@link Syntax} or {@link Content} has been attached to this node.
+     * (either {@link SyntaxElement} or {@link Content} has been attached to this node.
      * @virtual
      */
     protected onChildAttached(node: Node) {}
 
     /**
      * When overridden in a derived class, handles operations that should trigger when a child node
-     * (either {@link Syntax} or {@link Content} has been detached to this node.
+     * (either {@link SyntaxElement} or {@link Content} has been detached to this node.
      * @virtual
      */
     protected onChildDetached(node: Node) {}
@@ -494,6 +529,38 @@ export abstract class Node {
     }
 
     /**
+     * Creates an iterator for the ancestors of this node.
+     */
+    public * ancestors(): IterableIterator<Node> {
+        let ancestor: Node | undefined = this._parent;
+        while (ancestor) {
+            const next: Node | undefined = ancestor._parent;
+            yield ancestor;
+            ancestor = next;
+        }
+    }
+
+    /**
+     * Iterates over each ancestor of this node, executing the provided callback for each ancestor. If the callback
+     * returns a value other than `undefined`, iteration stops and that value is returned.
+     * @param cb The callback to execute.
+     * @param args The arguments to pass to the callback.
+     * @returns The first non-`undefined` result returned by the callback; otherwise, `undefined`.
+     */
+    public forEachAncestor<A extends any[], T>(cb: (ancestor: Node, ...args: A) => T | undefined, ...args: A): T | undefined {
+        let ancestor: Node | undefined = this._parent;
+        while (ancestor) {
+            const next: Node | undefined = ancestor._parent;
+            const result: T | undefined = cb(ancestor, ...args);
+            if (result !== undefined) {
+                return result;
+            }
+            ancestor = next;
+        }
+        return undefined;
+    }
+
+    /**
      * When overridden in a derived class, handles operations that should trigger when
      * this node is about to be attached or detached from a {@link Document}.
      * @virtual
@@ -512,26 +579,27 @@ export abstract class Node {
      * @internal
      * @virtual
      */
-    protected onNodeAttached(this: Document, node: Node) {}
+    protected _onNodeAttached(this: Document, node: Node) {}
 
     /**
      * This method supports the tsdoc infrastructure and is not intended to be used in user code.
      * @internal
      * @virtual
      */
-    protected onNodeDetached(this: Document, node: Node) {}
+    protected _onNodeDetached(this: Document, node: Node) {}
 
-    private _raiseOnNodeAttached(this: Document, node: Node) {
-        this.onNodeAttached(node);
+    private _raiseOnNodeAttached(this: Document, node: Node): void {
+        this._onNodeAttached(node);
     }
 
-    private _raiseOnNodeDetached(this: Document, node: Node) {
-        this.onNodeDetached(node);
+    private _raiseOnNodeDetached(this: Document, node: Node): void {
+        this._onNodeDetached(node);
     }
 
     /**
      * This method supports the tsdoc infrastructure and is not intended to be used in user code.
      * @internal
+     * @virtual
      */
     protected _setOwnerDocument(ownerDocument: Document | undefined): void {
         if (this.ownerDocument !== ownerDocument) {
@@ -583,16 +651,4 @@ export abstract class Node {
             this._ownerDocument._raiseOnNodeChanged(this);
         }
     }
-
-    /**
-     * This method supports the tsdoc infrastructure and is not intended to be used in user code.
-     * @internal
-     */
-    protected static _printNode(printer: TSDocPrinter, node: Node): void {
-        if (node.print) {
-            node.print(printer);
-        }
-    }
-
-    protected print?(printer: TSDocPrinter): void;
 }

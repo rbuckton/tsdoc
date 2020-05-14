@@ -1,3 +1,5 @@
+export type TokenLike = Token | symbol;
+
 export enum Token {
     Unknown,
     EndOfFileToken,
@@ -6,8 +8,9 @@ export enum Token {
     NewLineTrivia,                      // \r (or) \n (or) \r\n
     SpaceTrivia,                        // " "
     TabTrivia,                          // \t
-    OtherAsciiWhitespaceTrivia,         // \r, \n, \v
-    OtherUnicodeWhitespaceTrivia,       // Unicode category Zs, \t, \r, \n, \f
+    PartialTabTrivia,                   // zero-width trivia indicating a single column preceding a tab stop
+    OtherAsciiWhitespaceTrivia,         // \v
+    OtherUnicodeWhitespaceTrivia,       // Unicode category Zs, \f
 
     // Punctuation
     // - ASCII Punctuation Characters
@@ -49,61 +52,6 @@ export enum Token {
     // Other
     DecimalDigits,                      // 0-9
     Text,
-
-    // TSDoc tokens
-    DocTagName,                         // param, type, etc.
-
-    // Markdown Tokens
-    PartialTabTrivia,                   // zero-width trivia indicating a single column preceding a tab stop
-    AtxHeadingToken,                    // #{1,6}
-    BacktickCodeFenceToken,             // `{3,}
-    TildeCodeFenceToken,                // ~{3,}
-    EqualsSetextHeadingToken,           // =====
-    MinusSetextHeadingToken,            // -----
-    AsteriskThematicBreakToken,         // ***
-    MinusThematicBreakToken,            // ---
-    UnderscoreThematicBreakToken,       // ___
-    OrderedListNumberLiteral,           // a decimal number preceding a . or a )
-    LinkLabelToken,                     // [abc]
-    LinkDestinationToken,               // <abc> or http://foo
-    LinkTitleToken,                     // "abc" or 'abc' or (abc)
-    SpaceSpaceHardBreakToken,           // (space)(space)\n
-    BackslashHardBreakToken,            // (backslash)\n
-    ExclamationOpenBracketToken,        // ![
-    AsteriskEmphasisToken,              // * or ** or ***
-    UnderscoreEmphasisToken,            // _ or __ or ___
-    AbsoluteUri,                        // scheme:uri
-    EmailAddress,                       // user@domain
-    BacktickString,                     // ` or `` or ``` ...
-    CodeSpan,                           // `a` or `` a`b `` ...
-    BackslashEscapeCharacter,           // \\ (or other escapes)
-    UnalignedTableDelimiterToken,       // -
-    LeftAlignedTableDelimiterToken,     // :-
-    RightAlignedTableDelimiterToken,    // -:
-    CenterAlignedTableDelimiterToken,   // :-:
-    UncheckedTaskListMarkerToken,       // [ ]
-    CheckedTaskListMarkerToken,         // [x]
-    TildeTildeToken,                    // ~~
-    GfmWwwAutolinkToken,                // www.commonmark.org
-    GfmUrlAutolinkToken,                // http://www.commonmark.org
-
-    // Html Tokens
-    HtmlProcessingInstructionStartToken,    // <?
-    HtmlProcessingInstructionEndToken,      // ?>
-    HtmlEndTagStartToken,                   // </
-    HtmlSelfClosingTagEndToken,             // />
-    HtmlDeclarationStartToken,              // <!
-    HtmlCharacterDataStartToken,            // <![CDATA[
-    HtmlCharacterDataEndToken,              // ]]>
-    HtmlCommentStartToken,                  // <!--
-    HtmlCommentEndToken,                    // -->
-    HtmlCommentMinusMinusToken,                // --
-    HtmlTagName,                            // a, html, etc.
-    HtmlAttributeName,                      // src, href, etc.
-    HtmlSingleQuotedAttributeValue,         // 'abc'
-    HtmlDoubleQuotedAttributeValue,         // "abc"
-    HtmlUnquotedAttributeValue,             // abc
-    HtmlCharacterEntity,                    // &amp; or &#32; or &#x20; ...
 }
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -114,7 +62,7 @@ export namespace Token {
         ;
 
     // https://spec.commonmark.org/0.29/#line-ending
-    export function isLineEnding(token: Token): token is Token.LineEnding | Token.EndOfFileToken {
+    export function isLineEnding(token: TokenLike): token is Token.LineEnding | Token.EndOfFileToken {
         return token === Token.NewLineTrivia
             || token === Token.EndOfFileToken;
     }
@@ -128,7 +76,7 @@ export namespace Token {
         ;
 
     // https://spec.commonmark.org/0.29/#whitespace-character
-    export function isWhitespaceCharacter(token: Token): token is Token.WhitespaceCharacter {
+    export function isWhitespaceCharacter(token: TokenLike): token is Token.WhitespaceCharacter {
         return token === Token.SpaceTrivia
             || token === Token.TabTrivia
             || token === Token.PartialTabTrivia
@@ -142,7 +90,7 @@ export namespace Token {
         ;
 
     // https://spec.commonmark.org/0.29/#unicode-whitespace-character
-    export function isUnicodeWhitespaceCharacter(token: Token): token is Token.UnicodeWhitespaceCharacter {
+    export function isUnicodeWhitespaceCharacter(token: TokenLike): token is Token.UnicodeWhitespaceCharacter {
         return isWhitespaceCharacter(token)
             || token === Token.OtherUnicodeWhitespaceTrivia;
     }
@@ -153,7 +101,7 @@ export namespace Token {
         ;
 
     // https://spec.commonmark.org/0.29/#space
-    export function isSpace(token: Token): token is Token.Space {
+    export function isSpace(token: TokenLike): token is Token.Space {
         return token === Token.SpaceTrivia;
     }
 
@@ -163,7 +111,7 @@ export namespace Token {
         | Token.PartialTabTrivia
         ;
 
-    export function isIndentCharacter(token: Token): token is Token.IndentCharacter {
+    export function isIndentCharacter(token: TokenLike): token is Token.IndentCharacter {
         return token === Token.SpaceTrivia
             || token === Token.TabTrivia
             || token === Token.PartialTabTrivia;
@@ -175,7 +123,7 @@ export namespace Token {
         ;
 
     // https://spec.commonmark.org/0.29/#non-whitespace-character
-    export function isNonWhitespaceCharacter(token: Token): token is Token.NonWhitespaceCharacter {
+    export function isNonWhitespaceCharacter(token: TokenLike): token is Token.NonWhitespaceCharacter {
         return !isWhitespaceCharacter(token);
     }
 
@@ -216,7 +164,7 @@ export namespace Token {
         ;
 
     // https://spec.commonmark.org/0.29/#ascii-punctuation-character
-    export function isAsciiPunctuationCharacter(token: Token): token is Token.AsciiPunctuationCharacter {
+    export function isAsciiPunctuationCharacter(token: TokenLike): token is Token.AsciiPunctuationCharacter {
         return token === Token.ExclamationToken
             || token === Token.QuoteMarkToken
             || token === Token.HashToken
@@ -258,129 +206,9 @@ export namespace Token {
         ;
 
     // https://spec.commonmark.org/0.29/#punctuation-character
-    export function isPunctuationCharacter(token: Token): token is Token.PunctuationCharacter {
+    export function isPunctuationCharacter(token: TokenLike): token is Token.PunctuationCharacter {
         return isAsciiPunctuationCharacter(token)
             || token === Token.UnicodePunctuationToken;
-    }
-
-    export type CodeFence =
-        | Token.BacktickCodeFenceToken
-        | Token.TildeCodeFenceToken
-        ;
-
-    export function isCodeFence(token: Token): token is Token.CodeFence {
-        return token === Token.BacktickCodeFenceToken
-            || token === Token.TildeCodeFenceToken;
-    }
-
-    export type SetextHeading =
-        | Token.EqualsSetextHeadingToken
-        | Token.MinusSetextHeadingToken
-        ;
-
-    export function isSetextHeading(token: Token): token is Token.SetextHeading {
-        return token === Token.EqualsSetextHeadingToken
-            || token === Token.MinusSetextHeadingToken;
-    }
-
-    export type Heading =
-        | Token.AtxHeadingToken
-        | Token.SetextHeading
-        ;
-
-    export function isHeading(token: Token): token is Token.Heading {
-        return token === Token.AtxHeadingToken
-            || isSetextHeading(token);
-    }
-
-    export type ThematicBreak =
-        | Token.AsteriskThematicBreakToken
-        | Token.MinusThematicBreakToken
-        | Token.UnderscoreThematicBreakToken
-        ;
-
-    export function isThematicBreak(token: Token): token is Token.ThematicBreak {
-        return token === Token.AsteriskThematicBreakToken
-            || token === Token.MinusThematicBreakToken
-            || token === Token.UnderscoreThematicBreakToken;
-    }
-
-    export type UnorderedListItemBullet =
-        | Token.AsteriskToken
-        | Token.PlusToken
-        | Token.MinusToken
-        ;
-
-    export function isUnorderedListItemBullet(token: Token): token is Token.UnorderedListItemBullet {
-        return token === Token.AsteriskToken
-            || token === Token.PlusToken
-            || token === Token.MinusToken;
-    }
-
-    export type OrderedListItemBullet =
-        | Token.CloseParenToken
-        | Token.DotToken
-        ;
-
-    export function isOrderedListItemBullet(token: Token): token is Token.OrderedListItemBullet {
-        return token === Token.CloseParenToken
-            || token === Token.DotToken;
-    }
-
-    export type ListItemBullet =
-        | Token.UnorderedListItemBullet
-        | Token.OrderedListItemBullet
-        ;
-
-    export function isListItemBullet(token: Token): token is Token.ListItemBullet {
-        return isUnorderedListItemBullet(token)
-            || isOrderedListItemBullet(token);
-    }
-
-    export type HtmlAttributeValue =
-        | Token.HtmlSingleQuotedAttributeValue
-        | Token.HtmlDoubleQuotedAttributeValue
-        | Token.HtmlUnquotedAttributeValue
-        ;
-
-    export function isHtmlAttributeValue(token: Token): token is Token.HtmlAttributeValue {
-        return token === Token.HtmlSingleQuotedAttributeValue
-            || token === Token.HtmlDoubleQuotedAttributeValue
-            || token === Token.HtmlUnquotedAttributeValue;
-    }
-
-    export type HtmlStartToken =
-        | Token.LessThanToken
-        | Token.HtmlProcessingInstructionStartToken
-        | Token.HtmlEndTagStartToken
-        | Token.HtmlDeclarationStartToken
-        | Token.HtmlCharacterDataStartToken
-        | Token.HtmlCommentStartToken
-        ;
-
-    export function isHtmlStartToken(token: Token): token is Token.HtmlStartToken {
-        return token === Token.LessThanToken
-            || token === Token.HtmlProcessingInstructionStartToken
-            || token === Token.HtmlEndTagStartToken
-            || token === Token.HtmlDeclarationStartToken
-            || token === Token.HtmlCharacterDataStartToken
-            || token === Token.HtmlCommentStartToken;
-    }
-
-    export type HtmlEndToken =
-        | Token.GreaterThanToken
-        | Token.HtmlProcessingInstructionEndToken
-        | Token.HtmlSelfClosingTagEndToken
-        | Token.HtmlCharacterDataEndToken
-        | Token.HtmlCommentEndToken
-        ;
-
-    export function isHtmlEndToken(token: Token): token is Token.HtmlEndToken {
-        return token === Token.GreaterThanToken
-            || token === Token.HtmlProcessingInstructionEndToken
-            || token === Token.HtmlSelfClosingTagEndToken
-            || token === Token.HtmlCharacterDataEndToken
-            || token === Token.HtmlCommentEndToken;
     }
 
     export type TextLike =
@@ -388,52 +216,8 @@ export namespace Token {
         | Token.DecimalDigits
         ;
 
-    export function isTextLike(token: Token): token is Token.TextLike {
+    export function isTextLike(token: TokenLike): token is Token.TextLike {
         return token === Token.Text
             || token === Token.DecimalDigits;
-    }
-
-    export type HardBreakToken =
-        | Token.SpaceSpaceHardBreakToken
-        | Token.BackslashHardBreakToken
-        ;
-
-    export function isHardBreakToken(token: Token): token is Token.HardBreakToken {
-        return token === Token.SpaceSpaceHardBreakToken
-            || token === Token.BackslashHardBreakToken;
-    }
-
-    export type EmphasisToken =
-        | Token.AsteriskEmphasisToken
-        | Token.UnderscoreEmphasisToken
-        ;
-
-    export function isEmphasisToken(token: Token): token is Token.EmphasisToken {
-        return token === Token.AsteriskEmphasisToken
-            || token === Token.UnderscoreEmphasisToken;
-    }
-
-    export type TableDelimiterToken =
-        | Token.UnalignedTableDelimiterToken
-        | Token.LeftAlignedTableDelimiterToken
-        | Token.RightAlignedTableDelimiterToken
-        | Token.CenterAlignedTableDelimiterToken
-        ;
-
-    export function isTableDelimiterToken(token: Token): token is Token.TableDelimiterToken {
-        return token === Token.UnalignedTableDelimiterToken
-            || token === Token.LeftAlignedTableDelimiterToken
-            || token === Token.RightAlignedTableDelimiterToken
-            || token === Token.CenterAlignedTableDelimiterToken;
-    }
-
-    export type TaskListMarkerToken =
-        | Token.UncheckedTaskListMarkerToken
-        | Token.CheckedTaskListMarkerToken
-        ;
-
-    export function isTaskListMarkerToken(token: Token): token is Token.TaskListMarkerToken {
-        return token === Token.UncheckedTaskListMarkerToken
-            || token === Token.CheckedTaskListMarkerToken;
     }
 }

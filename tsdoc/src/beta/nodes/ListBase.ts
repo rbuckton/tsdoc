@@ -1,37 +1,28 @@
 import { Block, IBlockParameters } from "./Block";
-import { ListItemBase, IListItemContainer, IListItemContainerParameters } from "./ListItemBase";
-import { ContentUtils } from "./ContentUtils";
+import { ContentUtils } from "../utils/ContentUtils";
+import { ListItemContainerMixin, IListItemContainerParameters } from "./mixins/ListItemContainerMixin";
+import { mixin } from "../mixin";
+import { BlockChildMixin } from "./mixins/BlockChildMixin";
+import { BlockSiblingMixin } from "./mixins/BlockSiblingMixin";
 
 export interface IListBaseParameters extends IBlockParameters, IListItemContainerParameters {
 }
 
-export abstract class ListBase extends Block implements IListItemContainer {
+export abstract class ListBase extends mixin(Block, [
+    BlockChildMixin,
+    BlockSiblingMixin,
+    ListItemContainerMixin,
+]) {
     public constructor(parameters?: IListBaseParameters) {
         super(parameters);
         ContentUtils.appendContent(this, parameters && parameters.content);
     }
 
     /**
-     * Gets the first child of this node, if that child is a `ListItemBase`.
+     * {@inheritDoc Node.isList()}
+     * @override 
      */
-    public get firstChildListItem(): ListItemBase | undefined {
-        return this.firstChild && this.firstChild.isListItem() ? this.firstChild : undefined;
-    }
-
-    /**
-     * Gets the last child of this node, if that child is a `ListItemBase`.
-     */
-    public get lastChildListItem(): ListItemBase | undefined {
-        return this.lastChild && this.lastChild.isListItem() ? this.lastChild : undefined;
-    }
-
-    /** @override */
     public isList(): true {
-        return true;
-    }
-
-    /** @override */
-    public isListItemContainer(): true {
         return true;
     }
 }

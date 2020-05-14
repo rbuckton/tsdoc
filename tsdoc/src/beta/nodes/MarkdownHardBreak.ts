@@ -1,41 +1,56 @@
 import { Inline, IInlineParameters } from "./Inline";
 import { SyntaxKind } from "./SyntaxKind";
-import { Token } from "../parser/Token";
-import { TSDocPrinter } from "../parser/TSDocPrinter";
+import { IInlineSyntax } from "../syntax/IInlineSyntax";
+import { MarkdownLineBreakSyntax } from "../syntax/commonmark/inline/MarkdownLineBreakSyntax";
+import { mixin } from "../mixin";
+import { BlockChildMixin } from "./mixins/BlockChildMixin";
+import { InlineChildMixin } from "./mixins/InlineChildMixin";
+import { InlineSiblingMixin } from "./mixins/InlineSiblingMixin";
 
 export interface IMarkdownHardBreakParameters extends IInlineParameters {
-    breakToken?: Token.HardBreakToken;
+    backslash?: boolean;
 }
 
-export class MarkdownHardBreak extends Inline {
-    private _breakToken: Token.HardBreakToken | undefined;
+export class MarkdownHardBreak extends mixin(Inline, [
+    BlockChildMixin,
+    InlineChildMixin,
+    InlineSiblingMixin,
+]) {
+    private _backslash: boolean | undefined;
 
     public constructor(parameters?: IMarkdownHardBreakParameters) {
         super(parameters);
-        this._breakToken = parameters && parameters.breakToken;
+        this._backslash = parameters && parameters.backslash;
     }
 
-    /** @override */
+    /**
+     * {@inheritDoc Node.kind}
+     * @override
+     */
     public get kind(): SyntaxKind.MarkdownHardBreak {
         return SyntaxKind.MarkdownHardBreak;
     }
 
-    public get breakToken(): Token.HardBreakToken {
-        return this._breakToken || Token.SpaceSpaceHardBreakToken;
+    /**
+     * {@inheritDoc Node.syntax}
+     * @override
+     */
+    public get syntax(): IInlineSyntax {
+        return MarkdownLineBreakSyntax;
     }
 
-    public set breakToken(value: Token.HardBreakToken) {
-        if (!Token.isHardBreakToken(value)) throw new RangeError("Argument out of range: value");
-        if (this.breakToken !== value) {
+    /**
+     * Gets or sets the TSDoc/markdown style for the break.
+     */
+    public get backslash(): boolean {
+        return this._backslash || false;
+    }
+
+    public set backslash(value: boolean) {
+        if (this.backslash !== value) {
             this.beforeChange();
-            this._breakToken = value;
+            this._backslash = value;
             this.afterChange();
         }
-    }
-
-    /** @override */
-    protected print(printer: TSDocPrinter): void {
-        printer.write(this.breakToken === Token.SpaceSpaceHardBreakToken ? '  ' : '\\');
-        printer.writeln();
     }
 }

@@ -1,13 +1,17 @@
-import { Inline, IInlineParameters, IInlineContainer } from "./Inline";
+import { Inline, IInlineParameters } from "./Inline";
 import { MarkdownLinkDestination } from "./MarkdownLinkDestination";
 import { MarkdownLinkTitle } from "./MarkdownLinkTitle";
 import { MarkdownLinkLabel } from "./MarkdownLinkLabel";
-import { Syntax } from "./Syntax";
+import { SyntaxElement } from "./SyntaxElement";
 import { Node } from "./Node";
-import { MarkdownUtils } from "../parser/utils/MarkdownUtils";
+import { MarkdownUtils } from "../utils/MarkdownUtils";
 import { MarkdownLinkReference } from "./MarkdownLinkReference";
-import { TSDocPrinter } from "../parser/TSDocPrinter";
-import { ContentUtils } from "./ContentUtils";
+import { ContentUtils } from "../utils/ContentUtils";
+import { InlineContainerMixin } from "./mixins/InlineContainerMixin";
+import { mixin } from "../mixin";
+import { BlockChildMixin } from "./mixins/BlockChildMixin";
+import { InlineChildMixin } from "./mixins/InlineChildMixin";
+import { InlineSiblingMixin } from "./mixins/InlineSiblingMixin";
 
 export interface ILinkBaseParameters extends IInlineParameters {
     content?: Inline | ReadonlyArray<Inline> | string;
@@ -16,7 +20,12 @@ export interface ILinkBaseParameters extends IInlineParameters {
     label?: MarkdownLinkLabel | string;
 }
 
-export abstract class LinkBase extends Inline implements IInlineContainer {
+export abstract class LinkBase extends mixin(Inline, [
+    BlockChildMixin,
+    InlineChildMixin,
+    InlineSiblingMixin,
+    InlineContainerMixin,
+]) {
     private _destinationSyntax: MarkdownLinkDestination | undefined;
     private _titleSyntax: MarkdownLinkTitle | undefined;
     private _labelSyntax: MarkdownLinkLabel | undefined;
@@ -40,6 +49,9 @@ export abstract class LinkBase extends Inline implements IInlineContainer {
         ContentUtils.appendContent(this, parameters.content);
     }
 
+    /**
+     * Gets or sets the destination for the link.
+     */
     public get destination(): string {
         if (this._destinationSyntax) return this._destinationSyntax.text;
         const linkReference: MarkdownLinkReference | undefined = this._resolveLinkReference();
@@ -51,6 +63,9 @@ export abstract class LinkBase extends Inline implements IInlineContainer {
         this._ensureDestinationSyntax().text = value;
     }
 
+    /**
+     * Gets or sets the title for the link.
+     */
     public get title(): string | undefined {
         if (this._titleSyntax) return this._titleSyntax.text;
         const linkReference: MarkdownLinkReference | undefined = this._resolveLinkReference();
@@ -70,6 +85,9 @@ export abstract class LinkBase extends Inline implements IInlineContainer {
         }
     }
 
+    /**
+     * Gets or sets the reference lable for the link.
+     */
     public get label(): string | undefined {
         return this._labelSyntax ? this._labelSyntax.text : undefined;
     }
@@ -87,32 +105,30 @@ export abstract class LinkBase extends Inline implements IInlineContainer {
         this._maybeInvalidateResolvedReference();
     }
 
-    /** @override */
-    public isInlineContainer(): true {
-        return true;
-    }
-
-    /** @override */
+    /**
+     * {@inheritDoc Node.isLink()}
+     * @override
+     */
     public isLink(): true {
         return true;
     }
 
     /**
-     * Iterates through each syntactic and content element of this node.
-     * @param cb The callback to execute for each node. If the callback returns a value other than `undefined`, iteration
-     * stops and that value is returned.
-     *
+     * {@inheritDoc Node.forEachNode()}
      * @override
      */
     public forEachNode<A extends any[], T>(cb: (node: Node, ...args: A) => T | undefined, ...args: A): T | undefined {
         // inline content comes before other syntax
         return this.forEachChild(cb, ...args)
-            || this.forEachSyntax(cb, ...args);
+            || this.forEachSyntaxElement(cb, ...args);
     }
 
-    /** @override */
-    public getSyntax(): ReadonlyArray<Syntax> {
-        const syntax: Syntax[] = [];
+    /**
+     * {@inheritDoc Node.getSyntaxElements()}
+     * @override
+     */
+    public getSyntaxElements(): ReadonlyArray<SyntaxElement> {
+        const syntax: SyntaxElement[] = [];
         if (this._destinationSyntax || this._titleSyntax) {
             if (this._destinationSyntax) syntax.push(this._destinationSyntax);
             if (this._titleSyntax) syntax.push(this._titleSyntax);
@@ -193,22 +209,4 @@ export abstract class LinkBase extends Inline implements IInlineContainer {
             this._maybeInvalidateResolvedReference();
         }
     }
-
-    /** @override */
-    protected print(printer: TSDocPrinter): void {
-        this.printLinkContent(printer);
-        if (this._destinationSyntax) {
-            printer.write('(');
-            Node._printNode(printer, this._destinationSyntax);
-            if (this._titleSyntax) {
-                printer.write(' ');
-                Node._printNode(printer, this._titleSyntax);
-            }
-            printer.write(')');
-        } else if (this._labelSyntax) {
-            Node._printNode(printer, this._labelSyntax);
-        }
-    }
-
-    protected abstract printLinkContent(printer: TSDocPrinter): void;
 }

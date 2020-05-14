@@ -1,16 +1,25 @@
 import { SyntaxKind } from "./SyntaxKind";
 import { DocTagName } from "./DocTagName";
-import { Block, IBlockParameters, IBlockContainer, IBlockContainerParameters } from "./Block";
+import { Block, IBlockParameters } from "./Block";
 import { Node } from "./Node";
-import { Syntax } from "./Syntax";
-import { TSDocPrinter } from "../parser/TSDocPrinter";
-import { ContentUtils } from "./ContentUtils";
+import { SyntaxElement } from "./SyntaxElement";
+import { ContentUtils } from "../utils/ContentUtils";
+import { IBlockSyntax } from "../syntax/IBlockSyntax";
+import { DocBlockTagSyntax } from "../syntax/tsdoc/block/DocBlockTagSyntax";
+import { BlockContainerMixin, IBlockContainerParameters } from "./mixins/BlockContainerMixin";
+import { mixin } from "../mixin";
+import { BlockSiblingMixin } from "./mixins/BlockSiblingMixin";
+import { BlockChildMixin } from "./mixins/BlockChildMixin";
 
 export interface IDocBlockTagParameters extends IBlockParameters, IBlockContainerParameters {
     tagName?: DocTagName | string;
 }
 
-export class DocBlockTag extends Block implements IBlockContainer {
+export class DocBlockTag extends mixin(Block, [
+    BlockChildMixin,
+    BlockSiblingMixin,
+    BlockContainerMixin
+]) {
     private _tagNameSyntax: DocTagName;
 
     public constructor(parameters: IDocBlockTagParameters = {}) {
@@ -22,12 +31,24 @@ export class DocBlockTag extends Block implements IBlockContainer {
     }
 
     /**
+     * {@inheritDoc Node.kind}
      * @override
      */
     public get kind(): SyntaxKind.DocBlockTag {
         return SyntaxKind.DocBlockTag;
     }
 
+    /**
+     * {@inheritDoc Node.syntax}
+     * @override
+     */
+    public get syntax(): IBlockSyntax<DocBlockTag> {
+        return DocBlockTagSyntax;
+    }
+
+    /**
+     * Gets or sets the TSDoc tag name for this block.
+     */
     public get tagName(): string {
         return this._tagNameSyntax.text;
     }
@@ -37,13 +58,7 @@ export class DocBlockTag extends Block implements IBlockContainer {
     }
 
     /**
-     * @override
-     */
-    public isBlockContainer(): true {
-        return true;
-    }
-
-    /**
+     * {@inheritdoc Node.canHaveParent()}
      * @override
      */
     public canHaveParent(node: Node): boolean {
@@ -51,14 +66,10 @@ export class DocBlockTag extends Block implements IBlockContainer {
     }
 
     /**
+     * {@inheritdoc Node.getSyntaxElements()}
      * @override
      */
-    public getSyntax(): ReadonlyArray<Syntax> {
+    public getSyntaxElements(): ReadonlyArray<SyntaxElement> {
         return [this._tagNameSyntax];
-    }
-
-    /** @override */
-    protected print(printer: TSDocPrinter): void {
-        throw new Error("Not yet implemented");
     }
 }

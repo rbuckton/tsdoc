@@ -1,13 +1,14 @@
 import { SyntaxKind } from "./SyntaxKind";
-import { Syntax, ISyntaxParameters } from "./Syntax";
-import { TSDocPrinter } from "../parser/TSDocPrinter";
+import { SyntaxElement, ISyntaxParameters } from "./SyntaxElement";
+import { ISyntaxElementSyntax } from "../syntax/ISyntaxElementSyntax";
+import { MarkdownLinkDestinationSyntax } from "../syntax/commonmark/elements/MarkdownLinkDestinationSyntax";
 
 export interface IMarkdownLinkDestinationParameters extends ISyntaxParameters {
     text?: string;
     bracketed?: boolean;
 }
 
-export class MarkdownLinkDestination extends Syntax {
+export class MarkdownLinkDestination extends SyntaxElement {
     private _text: string | undefined;
     private _bracketed: boolean | undefined;
 
@@ -17,15 +18,31 @@ export class MarkdownLinkDestination extends Syntax {
         this._bracketed = parameters && parameters.bracketed;
     }
 
+    /**
+     * {@inheritDoc Node.kind}
+     * @override
+     */
     public get kind(): SyntaxKind.MarkdownLinkDestination {
         return SyntaxKind.MarkdownLinkDestination;
     }
 
+    /**
+     * {@inheritDoc Node.syntax}
+     * @override
+     */
+    public get syntax(): ISyntaxElementSyntax<MarkdownLinkDestination> {
+        return MarkdownLinkDestinationSyntax;
+    }
+
+    /**
+     * Gets or sets the text of the destination.
+     */
     public get text(): string {
         return this._text || '';
     }
 
     public set text(value: string) {
+        // TODO: validate that value is a valid destination?
         if (this.text !== value) {
             this.beforeChange();
             this._text = value;
@@ -33,6 +50,9 @@ export class MarkdownLinkDestination extends Syntax {
         }
     }
 
+    /**
+     * Gets or sets the TSDoc/markdown style for the destination.
+     */
     public get bracketed(): boolean {
         return this._bracketed || false;
     }
@@ -43,10 +63,5 @@ export class MarkdownLinkDestination extends Syntax {
             this._bracketed = value;
             this.afterChange();
         }
-    }
-
-    /** @override */
-    protected print(printer: TSDocPrinter): void {
-        printer.write(this.text);
     }
 }

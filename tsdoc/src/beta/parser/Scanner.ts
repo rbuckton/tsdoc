@@ -1,21 +1,21 @@
 import { Preprocessor, IPreprocessorState } from "./Preprocessor";
 import { IMapping, Mapper } from "./Mapper";
-import { Token } from "./Token";
+import { Token, TokenLike } from "./Token";
 import { CharacterCodes } from "./CharacterCodes";
-import { UnicodeUtils } from "./utils/UnicodeUtils";
+import { UnicodeUtils } from "../utils/UnicodeUtils";
 import { LineMap, Position } from "./LineMap";
-import { StringUtils } from "./utils/StringUtils";
+import { StringUtils } from "../utils/StringUtils";
 
 export interface IScannerState extends IPreprocessorState {
     readonly startPos: number;
     readonly startColumn: number;
-    readonly token: Token;
+    readonly token: TokenLike;
     readonly tokenValue: string | undefined;
     readonly partialTabColumns: number;
 }
 
 export interface IRescanStringOptions {
-    token: Token;
+    token: TokenLike;
     openQuote?: number;
     closeQuote?: number;
     openBracket?: number;
@@ -33,7 +33,7 @@ export class Scanner {
     private _preprocessor: Preprocessor;
     private _startPos: number = 0;
     private _startColumn: number = 0;
-    private _token: Token = Token.Unknown;
+    private _token: TokenLike = Token.Unknown;
     private _tokenValue: string | undefined;
     private _partialTabColumns: number = 0;
     private _lastState: IScannerState | undefined;
@@ -157,7 +157,7 @@ export class Scanner {
      * Scans the next token using the default rules.
      * @param columns Indicates whether TAB characters should be advanced by a single column rather than the entire character.
      */
-    public scan(columns: boolean = false): Token {
+    public scan(columns: boolean = false): TokenLike {
         this._lastState = undefined;
         if (columns) {
             this._rescanPartialTabTrivia();
@@ -237,8 +237,10 @@ export class Scanner {
     /**
      * If the current token matches the provided expectation, scans the next token using the default rules.
      * @param expectation The token or token test used to check the current token.
+     * @returns `true` if the current token matched the expectation and the scanner advanced; otherwise,
+     * `false` and the scanner's position has not changed.
      */
-    public scanOptional(expectation: Token | ((value: Token) => boolean)): boolean {
+    public expect(expectation: TokenLike | ((value: TokenLike) => boolean)): boolean {
         if (typeof expectation === "function" ? expectation(this.token()) : this.token() === expectation) {
             this.scan();
             return true;
@@ -315,7 +317,7 @@ export class Scanner {
         }
     }
 
-    private _rescanPartialTabTrivia(): Token {
+    private _rescanPartialTabTrivia(): TokenLike {
         if (this._token === Token.TabTrivia) {
             this._partialTabColumns = this._preprocessor.column - this._startColumn - 1;
             return this.setToken(Token.PartialTabTrivia);
@@ -329,7 +331,7 @@ export class Scanner {
      * NOTE: This is implemented as a method and not as an accessor so that TypeScript's control flow does not
      * lock in a specific token type in conditional and loop statements.
      */
-    public token(): Token {
+    public token(): TokenLike {
         return this._token;
     }
 
@@ -352,7 +354,7 @@ export class Scanner {
      * @param token The new token.
      * @param tokenValue An optional token value for the new token.
      */
-    public setToken<T extends Token>(token: T, tokenValue?: string): T {
+    public setToken<T extends TokenLike>(token: T, tokenValue?: string): T {
         this._lastState = undefined;
         this._token = token;
         this._tokenValue = tokenValue;
@@ -364,12 +366,12 @@ export class Scanner {
      * @param lookAhead Indicates whether the position should be unconditionally reset when the callback completes.
      * @param cb The callback to execute. If the return value is `undefined`, then the position will be reset.
      */
-    public rescan<A extends any[]>(cb: (scanner: Scanner, ...args: A) => Token | undefined, ...args: A): Token {
-        const token: Token | undefined = this.speculate(/*lookAhead*/ false, Scanner._rescan, this, cb, args);
+    public rescan<A extends any[]>(cb: (scanner: Scanner, ...args: A) => TokenLike | undefined, ...args: A): TokenLike {
+        const token: TokenLike | undefined = this.speculate(/*lookAhead*/ false, Scanner._rescan, this, cb, args);
         return token === undefined ? this.token() : token !== this.token() ? this.setToken(token) : token;
     }
 
-    private static _rescan<A extends any[]>(scanner: Scanner, cb: (scanner: Scanner, ...args: A) => Token | undefined, args: A): Token | undefined {
+    private static _rescan<A extends any[]>(scanner: Scanner, cb: (scanner: Scanner, ...args: A) => TokenLike | undefined, args: A): TokenLike | undefined {
         return cb(scanner, ...args);
     }
 
@@ -382,6 +384,14 @@ export class Scanner {
     }
 
     /**
+     * Performs speculative parsing. After the callback has executed, the scanner's state is restored to its previous state if `undefined` is returned.
+     * @param cb The callback to execute.
+     */
+    public tryParse<A extends any[], T>(cb: (scanner: Scanner, ...args: A) => T, ...args: A): T {
+        return this.speculate(/*lookAhead*/ false, cb.bind(undefined, this), ...args);
+    }
+
+    /**
      * Perform speculation.
      * @param lookAhead Indicates whether the position should be unconditionally reset when the callback completes.
      * @param cb The callback to execute. If the return value is `undefined`, then the position will be reset.
@@ -389,7 +399,7 @@ export class Scanner {
     public speculate<A extends any[], T>(lookAhead: boolean, cb: (...args: A) => T, ...args: A): T {
         const savedStartPos: number = this._startPos;
         const savedStartColumn: number = this._startColumn;
-        const savedToken: Token = this._token;
+        const savedToken: TokenLike = this._token;
         const savedTokenValue: string | undefined = this._tokenValue;
         const savedPartialTabColumns: number = this._partialTabColumns;
         let result!: T;
@@ -408,7 +418,7 @@ export class Scanner {
     }
 
     // TODO(rbuckton): Move this to more specific rescanners where appropriate.
-    public static rescanString(scanner: Scanner, options: IRescanStringOptions): Token | undefined {
+    public static rescanString(scanner: Scanner, options: IRescanStringOptions): TokenLike | undefined {
         const {
             token,
             openQuote,

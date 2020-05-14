@@ -1,4 +1,4 @@
-import { ArrayUtils } from "./utils/ArrayUtils";
+import { ArrayUtils } from "../utils/ArrayUtils";
 
 export interface IMapping {
     readonly pos: number;

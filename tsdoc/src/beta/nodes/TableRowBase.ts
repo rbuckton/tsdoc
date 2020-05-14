@@ -1,23 +1,19 @@
 import { Block, IBlockParameters } from "./Block";
-import { Content } from "./Content";
-import { ITableCellContainer, ITableCellContainerParameters, TableCellBase } from "./TableCellBase";
-import { ContentUtils } from "./ContentUtils";
-import { TableBase } from "./TableBase";
+import { TableCellBase } from "./TableCellBase";
+import { ContentUtils } from "../utils/ContentUtils";
+import { TableCellContainerMixin, ITableCellContainerParameters } from "./mixins/TableCellContainerMixin";
+import { mixin } from "../mixin";
+import { TableRowSiblingMixin } from "./mixins/TableRowSiblingMixin";
+import { TableChildMixin } from "./mixins/TableChildMixin";
 
 export interface ITableRowBaseParameters extends IBlockParameters, ITableCellContainerParameters {
 }
 
-export interface ITableRowContainer extends Content {
-    isTableRowContainer(): true;
-    readonly firstChildTableRow: TableRowBase | undefined;
-    readonly lastChildTableRow: TableRowBase | undefined;
-}
-
-export interface ITableRowContainerParameters {
-    content?: TableRowBase | ReadonlyArray<TableRowBase>;
-}
-
-export abstract class TableRowBase extends Block implements ITableCellContainer {
+export abstract class TableRowBase extends mixin(Block, [
+    TableChildMixin,
+    TableRowSiblingMixin,
+    TableCellContainerMixin,
+]) {
     private _columnCount: number | undefined;
 
     public constructor(parameters?: ITableRowBaseParameters) {
@@ -37,41 +33,6 @@ export abstract class TableRowBase extends Block implements ITableCellContainer 
     }
 
     /**
-     * Gets the parent of this node, if that parent is a `TableBase`.
-     */
-    public get parentTable(): TableBase | undefined {
-        return this.parent && this.parent.isTable() ? this.parent : undefined;
-    }
-
-    /**
-     * Gets the previous sibling of this node, if that sibling is a `TableRowBase`.
-     */
-    public get previousSiblingTableRow(): TableRowBase | undefined {
-        return this.previousSibling && this.previousSibling.isTableRow() ? this.previousSibling : undefined;
-    }
-
-    /**
-     * Gets the next sibling of this node, if that sibling is a `TableRowBase`.
-     */
-    public get nextSiblingTableRow(): TableRowBase | undefined {
-        return this.nextSibling && this.nextSibling.isTableRow() ? this.nextSibling : undefined;
-    }
-
-    /**
-     * Gets the first child of this node, if that child is a `TableCellBase`.
-     */
-    public get firstChildTableCell(): TableCellBase | undefined {
-        return this.firstChild && this.firstChild.isTableCell() ? this.firstChild : undefined;
-    }
-
-    /**
-     * Gets the last child of this node, if that child is a `TableCellBase`.
-     */
-    public get lastChildTableCell(): TableCellBase | undefined {
-        return this.lastChild && this.lastChild.isTableCell() ? this.lastChild : undefined;
-    }
-
-    /**
      * Determines whether this row is the header row of a table.
      */
     public isHeaderRow(): boolean {
@@ -85,17 +46,18 @@ export abstract class TableRowBase extends Block implements ITableCellContainer 
         return !!this.parentTable && this.parentTable.firstChildTableRow !== this;
     }
 
-    /** @override */
+    /**
+     * {@inheritDoc Node.isTableRow()}
+     * @override
+     */
     public isTableRow(): true {
         return true;
     }
 
-    /** @override */
-    public isTableCellContainer(): true {
-        return true;
-    }
-
-    /** @override */
+    /**
+     * {@inheritDoc Node.onInvalidated()}
+     * @override
+     */
     protected onInvalidated() {
         super.onInvalidated();
         this._columnCount = undefined;

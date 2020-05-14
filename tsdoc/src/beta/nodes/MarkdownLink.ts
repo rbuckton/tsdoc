@@ -1,6 +1,7 @@
 import { SyntaxKind } from "./SyntaxKind";
 import { LinkBase, ILinkBaseParameters } from "./LinkBase";
-import { TSDocPrinter } from "../parser/TSDocPrinter";
+import { IInlineSyntax } from "../syntax/IInlineSyntax";
+import { MarkdownLinkSyntax } from "../syntax/commonmark/inline/MarkdownLinkSyntax";
 
 export interface IMarkdownLinkParameters extends ILinkBaseParameters {
 }
@@ -16,15 +17,19 @@ export class MarkdownLink extends LinkBase {
         super(parameters);
     }
 
-    /** @override */
+    /**
+     * {@inheritDoc Node.kind}
+     * @override
+     */
     public get kind(): SyntaxKind.MarkdownLink {
         return SyntaxKind.MarkdownLink;
     }
 
-    /** @override */
-    protected printLinkContent(printer: TSDocPrinter): void {
-        printer.write('[');
-        this.printChildren(printer);
-        printer.write(']');
+    /**
+     * {@inheritDoc Node.syntax}
+     * @override
+     */
+    public get syntax(): IInlineSyntax {
+        return MarkdownLinkSyntax;
     }
 }

@@ -1,12 +1,15 @@
 import { SyntaxKind } from "./SyntaxKind";
 import { Block, IBlockParameters } from "./Block";
-import { Token } from "../parser/Token";
-import { TSDocPrinter } from "../parser/TSDocPrinter";
-import { StringUtils } from "../parser/utils/StringUtils";
+import { StringUtils } from "../utils/StringUtils";
+import { IBlockSyntax } from "../syntax/IBlockSyntax";
+import { MarkdownCodeBlockSyntax } from "../syntax/commonmark/block/MarkdownCodeBlockSyntax";
+import { mixin } from "../mixin";
+import { BlockChildMixin } from "./mixins/BlockChildMixin";
+import { BlockSiblingMixin } from "./mixins/BlockSiblingMixin";
 
 export interface ICodeFence {
-    readonly token: Token.CodeFence;
-    readonly length: number;
+    readonly fenceChar: '`' | '~';
+    readonly fenceLength: number;
     readonly fenceOffset: number;
 }
 
@@ -18,13 +21,13 @@ export interface IMarkdownCodeBlockParameters extends IBlockParameters {
 
 function validateCodeFence(codeFence: ICodeFence | undefined, paramName: string): string | undefined {
     if (codeFence) {
-        if (!Token.isCodeFence(codeFence.token)) {
+        if (codeFence.fenceChar !== '`' && codeFence.fenceChar !== '~') {
             return `Argument out of range: ${paramName}.token.`;
         }
         if (codeFence.fenceOffset < 0 || codeFence.fenceOffset >= 4) {
             return `Argument out of range: ${paramName}.fenceOffset.`;
         }
-        if (codeFence.length < 3) {
+        if (codeFence.fenceLength < 3) {
             return `Argument out of range: ${paramName}.length.`;
         }
     }
@@ -34,7 +37,7 @@ function validateCodeFence(codeFence: ICodeFence | undefined, paramName: string)
 function validateInfo(info: string | undefined, codeFence: ICodeFence | undefined, forCodeFence: boolean): string | undefined {
     if (info &&
         codeFence &&
-        codeFence.token === Token.BacktickCodeFenceToken &&
+        codeFence.fenceChar === '`' &&
         info.indexOf('`') >= 0) {
         return forCodeFence ?
             'Cannot specify a backtick (\'`\') code fence if the info string contains a backtick.' :
@@ -45,10 +48,10 @@ function validateInfo(info: string | undefined, codeFence: ICodeFence | undefine
 
 function validateLiteral(literal: string | undefined, codeFence: ICodeFence | undefined, forCodeFence: boolean): string | undefined {
     if (literal && codeFence) {
-        const codeFenceToken: string = StringUtils.repeat(codeFence.token === Token.BacktickCodeFenceToken ? '`' : '~', codeFence.length);
+        const codeFenceToken: string = StringUtils.repeat(codeFence.fenceChar, codeFence.fenceLength);
         const codeFenceRegExp: RegExp = new RegExp(`^\\s{0,3}${codeFenceToken}\\s*$`, 'm');
         if (codeFenceRegExp.test(literal)) {
-            const codeFenceKind: string = codeFence.token === Token.BacktickCodeFenceToken ? 'backtick (\'`\')' : 'tilde (\'~\')';
+            const codeFenceKind: string = codeFence.fenceChar === '`' ? 'backtick (\'`\')' : 'tilde (\'~\')';
             return forCodeFence ?
                 `Cannot specify a ${codeFenceKind} code fence if the literal of the code block includes a line containing only '${codeFenceToken}' indented less than 4 spaces.` :
                 `The literal string of a code block with a ${codeFenceKind} code fence may not include a line containing only '${codeFenceToken}' indented less than 4 spaces.`;
@@ -57,7 +60,10 @@ function validateLiteral(literal: string | undefined, codeFence: ICodeFence | un
     return undefined;
 }
 
-export class MarkdownCodeBlock extends Block {
+export class MarkdownCodeBlock extends mixin(Block, [
+    BlockChildMixin,
+    BlockSiblingMixin,
+]) {
     private _codeFence: ICodeFence | undefined;
     private _info: string | undefined;
     private _literal: string | undefined;
@@ -75,10 +81,25 @@ export class MarkdownCodeBlock extends Block {
         this._literal = literal;
     }
 
+    /**
+     * {@inheritDoc Node.kind}
+     * @override
+     */
     public get kind(): SyntaxKind.MarkdownCodeBlock {
         return SyntaxKind.MarkdownCodeBlock;
     }
 
+    /**
+     * {@inheritDoc Node.syntax}
+     * @override
+     */
+    public get syntax(): IBlockSyntax<MarkdownCodeBlock> {
+        return MarkdownCodeBlockSyntax;
+    }
+
+    /**
+     * Gets or sets the code fence for this block.
+     */
     public get codeFence(): ICodeFence | undefined {
         return this._codeFence;
     }
@@ -96,6 +117,9 @@ export class MarkdownCodeBlock extends Block {
         }
     }
 
+    /**
+     * Gets or sets the info string for this block.
+     */
     public get info(): string {
         return this._info || '';
     }
@@ -110,6 +134,9 @@ export class MarkdownCodeBlock extends Block {
         }
     }
 
+    /**
+     * Gets or sets the literal text for this block.
+     */
     public get literal(): string {
         return this._literal || '';
     }
@@ -121,34 +148,6 @@ export class MarkdownCodeBlock extends Block {
             this.beforeChange();
             this._literal = value;
             this.afterChange();
-        }
-    }
-
-    /** @override */
-    protected print(printer: TSDocPrinter): void {
-        if (this.codeFence) {
-            printer.pushBlock({ indent: this.codeFence.fenceOffset });
-            printer.write(StringUtils.repeat(this.codeFence.token === Token.BacktickCodeFenceToken ? '`' : '~', this.codeFence.length));
-            if (this.info) {
-                printer.write(' ');
-                printer.write(this.info);
-            }
-            printer.writeln();
-            for (const line of this.literal.split(/\r\n?|\n/g)) {
-                printer.write(line);
-                printer.writeln();
-            }
-            printer.write(StringUtils.repeat(this.codeFence.token === Token.BacktickCodeFenceToken ? '`' : '~', this.codeFence.length));
-            printer.writeln();
-            printer.popBlock();
-        }
-        else {
-            printer.pushBlock({ indent: 4 });
-            for (const line of this.literal.split(/\r\n?|\n/g)) {
-                printer.write(line);
-                printer.writeln();
-            }
-            printer.popBlock();
         }
     }
 }

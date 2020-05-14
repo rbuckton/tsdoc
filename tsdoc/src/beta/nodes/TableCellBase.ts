@@ -1,26 +1,21 @@
 import { Block, IBlockParameters } from "./Block";
-import { Content } from "./Content";
-import { IInlineContainer, Inline, IInlineContainerParameters } from "./Inline";
 import { TableRowBase } from "./TableRowBase";
-import { ContentUtils } from "./ContentUtils";
+import { ContentUtils } from "../utils/ContentUtils";
 import { TableBase, TableAlignment } from "./TableBase";
 import { Node } from "./Node";
+import { mixin } from "../mixin";
+import { InlineContainerMixin, IInlineContainerParameters } from "./mixins/InlineContainerMixin";
+import { TableCellSiblingMixin } from "./mixins/TableCellSiblingMixin";
+import { TableRowChildMixin } from "./mixins/TableRowChildMixin";
 
 export interface ITableCellBaseParameters extends IBlockParameters, IInlineContainerParameters {
 }
 
-export interface ITableCellContainer extends Content {
-    isTableCellContainer(): true;
-    readonly firstChildTableCell: TableCellBase | undefined;
-    readonly lastChildTableCell: TableCellBase | undefined;
-}
-
-export interface ITableCellContainerParameters {
-    content?: TableCellBase | ReadonlyArray<TableCellBase>;
-}
-
-
-export abstract class TableCellBase extends Block implements IInlineContainer {
+export abstract class TableCellBase extends mixin(Block, [
+    TableRowChildMixin,
+    TableCellSiblingMixin,
+    InlineContainerMixin,
+]) {
     private _cachedColumnIndex: number | undefined;
     private _cachedParentRow: TableRowBase | undefined;
     private _cachedParentRowVersion: number | undefined;
@@ -37,50 +32,15 @@ export abstract class TableCellBase extends Block implements IInlineContainer {
      * Gets the containing table for this cell.
      */
     public get containingTable(): TableBase | undefined {
-        const parentRow: TableRowBase | undefined = this.parentRow;
+        const parentRow: TableRowBase | undefined = this.parentTableRow;
         return parentRow && parentRow.parentTable;
-    }
-
-    /**
-     * Gets the parent of this node, if that parent is a `TableRowBase`.
-     */
-    public get parentRow(): TableRowBase | undefined {
-        return this.parent && this.parent.isTableRow() ? this.parent : undefined;
-    }
-
-    /**
-     * Gets the previous sibling of this node, if that sibling is a `TableCellBase`.
-     */
-    public get previousSiblingTableCell(): TableCellBase | undefined {
-        return this.previousSibling && this.previousSibling.isTableCell() ? this.previousSibling : undefined;
-    }
-
-    /**
-     * Gets the next sibling of this node, if that sibling is a `TableCellBase`.
-     */
-    public get nextSiblingTableCell(): TableCellBase | undefined {
-        return this.nextSibling && this.nextSibling.isTableCell() ? this.nextSibling : undefined;
-    }
-
-    /**
-     * Gets the first child of this node, if that child is an `Inline`.
-     */
-    public get firstChildInline(): Inline | undefined {
-        return this.firstChild && this.firstChild.isInline() ? this.firstChild : undefined;
-    }
-
-    /**
-     * Gets the last child of this node, if that child is an `Inline`.
-     */
-    public get lastChildInline(): Inline | undefined {
-        return this.lastChild && this.lastChild.isInline() ? this.lastChild : undefined;
     }
 
     /**
      * Gets the column index of this cell within its parent row.
      */
     public get columnIndex(): number {
-        const parentRow: TableRowBase | undefined = this.parentRow;
+        const parentRow: TableRowBase | undefined = this.parentTableRow;
         if (!parentRow) return 0;
         if (this._cachedColumnIndex !== undefined &&
             this._cachedParentRow === parentRow &&
@@ -123,23 +83,23 @@ export abstract class TableCellBase extends Block implements IInlineContainer {
      * Determines whether this cell belongs to the header row of a table.
      */
     public isHeaderCell(): boolean {
-        return !!this.parentRow && this.parentRow.isHeaderRow();
+        const parentRow: TableRowBase | undefined = this.parentTableRow;
+        return !!parentRow && parentRow.isHeaderRow();
     }
 
     /**
      * Determines whether this cell belongs to a data row of a table.
      */
     public isDataCell(): boolean {
-        return !!this.parentRow && this.parentRow.isDataRow();
+        const parentRow: TableRowBase | undefined = this.parentTableRow;
+        return !!parentRow && parentRow.isDataRow();
     }
 
-    /** @override */
+    /**
+     * {@inheritDoc Node.isTableCell()}
+     * @override
+     */
     public isTableCell(): true {
-        return true;
-    }
-
-    /** @override */
-    public isInlineContainer(): true {
         return true;
     }
 }

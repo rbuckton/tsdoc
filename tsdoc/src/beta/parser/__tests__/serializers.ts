@@ -1,6 +1,5 @@
 import PrettyFormat = require("pretty-format");
 import { SyntaxKind } from "../../nodes/SyntaxKind";
-import { Token } from "../Token";
 import { Node } from "../../nodes/Node";
 import { MarkdownCodeBlock } from "../../nodes/MarkdownCodeBlock";
 import { MarkdownHeading } from "../../nodes/MarkdownHeading";
@@ -17,8 +16,9 @@ import { MarkdownLink } from "../../nodes/MarkdownLink";
 import { MarkdownImage } from "../../nodes/MarkdownImage";
 import { Content } from "../../nodes/Content";
 import { MarkdownListItem } from "../../nodes/MarkdownListItem";
-import { Syntax } from "../../nodes/Syntax";
-import { ArrayUtils } from "../utils/ArrayUtils";
+import { SyntaxElement } from "../../nodes/SyntaxElement";
+import { ArrayUtils } from "../../utils/ArrayUtils";
+import { DocBlockTag } from "../../nodes/DocBlockTag";
 
 export type Config = PrettyFormat.Config;
 export type Printer = (value: unknown, config: Config, indentation: string, depth: number, refs: ReadonlyArray<object>) => string;
@@ -231,7 +231,7 @@ function nodeToSnapshotCore(node: Node): object {
     // const lastLineIsBlank: boolean | undefined = parserState && parserState.lastLineIsBlank;
 
     return {
-        kind: SnapshotSerializer.enumValue(node.kind, SyntaxKind, Placement.AtStart, -Infinity),
+        kind: typeof node.kind === 'symbol' ? node.kind : SnapshotSerializer.enumValue(node.kind, SyntaxKind, Placement.AtStart, -Infinity),
         children: SnapshotSerializer.ignoreIfUndefined(children),
         // closed: SnapshotSerializer.ignoreIfUndefined(closed, Placement.Default, -10),
         // lastLineIsBlank: SnapshotSerializer.ignoreIfUndefined(lastLineIsBlank),
@@ -255,13 +255,17 @@ function documentToSnapshot(node: Document): object {
     };
 }
 
+function docBlockTagToSnapshot(node: DocBlockTag): object {
+    return {
+        ...nodeToSnapshotCore(node),
+        tagName: node.tagName
+    };
+}
+
 function markdownCodeBlockToSnapshot(node: MarkdownCodeBlock): object {
     return {
         ...nodeToSnapshotCore(node),
-        codeFence: node.codeFence && {
-            ...node.codeFence,
-            token: SnapshotSerializer.enumValue(node.codeFence.token, Token)
-        },
+        codeFence: node.codeFence,
         info: node.info,
         literal: node.literal
     };
@@ -270,7 +274,7 @@ function markdownCodeBlockToSnapshot(node: MarkdownCodeBlock): object {
 function markdownHeadingToSnapshot(node: MarkdownHeading): object {
     return {
         ...nodeToSnapshotCore(node),
-        headingToken: SnapshotSerializer.enumValue(node.headingToken, Token),
+        style: node.style,
         level: node.level
     };
 }
@@ -284,10 +288,7 @@ function markdownListToSnapshot(node: MarkdownList): object {
 function markdownListItemToSnapshot(node: MarkdownListItem): object {
     return {
         ...nodeToSnapshotCore(node),
-        listMarker: {
-            ...node.listMarker,
-            bulletToken: SnapshotSerializer.enumValue(node.listMarker.bulletToken, Token)
-        }
+        listMarker: node.listMarker
     };
 }
 
@@ -302,7 +303,7 @@ function markdownCodeSpanToSnapshot(node: MarkdownCodeSpan): object {
 function markdownHtmlInlineToSnapshot(node: MarkdownHtmlInline): object {
     return {
         ...nodeToSnapshotCore(node),
-        html: node.html
+        html: node.literal
     };
 }
 
@@ -331,7 +332,7 @@ function markdownLinkDestinationToSnapshot(node: MarkdownLinkDestination): objec
 }
 
 function markdownLinkReferenceToSnapshot(node: MarkdownLinkReference): object {
-    const syntax: ReadonlyArray<Syntax> = node.getSyntax();
+    const syntax: ReadonlyArray<SyntaxElement> = node.getSyntaxElements();
     const label: MarkdownLinkLabel | undefined = ArrayUtils.find(syntax, (node): node is MarkdownLinkLabel => node instanceof MarkdownLinkLabel);
     const destination: MarkdownLinkDestination | undefined = ArrayUtils.find(syntax, (node): node is MarkdownLinkDestination => node instanceof MarkdownLinkDestination);
     const title: MarkdownLinkTitle | undefined = ArrayUtils.find(syntax, (node): node is MarkdownLinkTitle => node instanceof MarkdownLinkTitle);
@@ -344,7 +345,7 @@ function markdownLinkReferenceToSnapshot(node: MarkdownLinkReference): object {
 }
 
 function markdownLinkToSnapshot(node: MarkdownLink): object {
-    const syntax: ReadonlyArray<Syntax> = node.getSyntax();
+    const syntax: ReadonlyArray<SyntaxElement> = node.getSyntaxElements();
     const label: MarkdownLinkLabel | undefined = ArrayUtils.find(syntax, (node): node is MarkdownLinkLabel => node instanceof MarkdownLinkLabel);
     const destination: MarkdownLinkDestination | undefined = ArrayUtils.find(syntax, (node): node is MarkdownLinkDestination => node instanceof MarkdownLinkDestination);
     const title: MarkdownLinkTitle | undefined = ArrayUtils.find(syntax, (node): node is MarkdownLinkTitle => node instanceof MarkdownLinkTitle);
@@ -357,7 +358,7 @@ function markdownLinkToSnapshot(node: MarkdownLink): object {
 }
 
 function markdownImageToSnapshot(node: MarkdownImage): object {
-    const syntax: ReadonlyArray<Syntax> = node.getSyntax();
+    const syntax: ReadonlyArray<SyntaxElement> = node.getSyntaxElements();
     const label: MarkdownLinkLabel | undefined = ArrayUtils.find(syntax, (node): node is MarkdownLinkLabel => node instanceof MarkdownLinkLabel);
     const destination: MarkdownLinkDestination | undefined = ArrayUtils.find(syntax, (node): node is MarkdownLinkDestination => node instanceof MarkdownLinkDestination);
     const title: MarkdownLinkTitle | undefined = ArrayUtils.find(syntax, (node): node is MarkdownLinkTitle => node instanceof MarkdownLinkTitle);
@@ -379,6 +380,7 @@ function runToSnapshot(node: Run): object {
 export function nodeToSnapshot(node: Node): object {
     switch (node.kind) {
         case SyntaxKind.Document: return documentToSnapshot(node as Document);
+        case SyntaxKind.DocBlockTag: return docBlockTagToSnapshot(node as DocBlockTag);
         case SyntaxKind.MarkdownCodeBlock: return markdownCodeBlockToSnapshot(node as MarkdownCodeBlock);
         case SyntaxKind.MarkdownHeading: return markdownHeadingToSnapshot(node as MarkdownHeading);
         case SyntaxKind.MarkdownList: return markdownListToSnapshot(node as MarkdownList);

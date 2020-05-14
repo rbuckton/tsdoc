@@ -1,0 +1,81 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`DocBlockTag: @a 1`] = `
+Document {
+  "kind": Document,
+  "children": Array [
+    DocBlockTag {
+      "kind": DocBlockTag,
+      "tagName": "@a",
+      "pos": 0,
+      "end": 2,
+    },
+  ],
+  "pos": 0,
+  "end": 2,
+}
+`;
+
+exports[`DocBlockTag: @a_ 1`] = `
+Document {
+  "kind": Document,
+  "children": Array [
+    DocBlockTag {
+      "kind": DocBlockTag,
+      "tagName": "@a_",
+      "pos": 0,
+      "end": 3,
+    },
+  ],
+  "pos": 0,
+  "end": 3,
+}
+`;
+
+exports[`DocBlockTag: @a_9 1`] = `
+Document {
+  "kind": Document,
+  "children": Array [
+    DocBlockTag {
+      "kind": DocBlockTag,
+      "tagName": "@a_9",
+      "pos": 0,
+      "end": 4,
+    },
+  ],
+  "pos": 0,
+  "end": 4,
+}
+`;
+
+exports[`DocBlockTag: @a9 1`] = `
+Document {
+  "kind": Document,
+  "children": Array [
+    DocBlockTag {
+      "kind": DocBlockTag,
+      "tagName": "@a9",
+      "pos": 0,
+      "end": 3,
+    },
+  ],
+  "pos": 0,
+  "end": 3,
+}
+`;
+
+exports[`DocBlockTag: @ab 1`] = `
+Document {
+  "kind": Document,
+  "children": Array [
+    DocBlockTag {
+      "kind": DocBlockTag,
+      "tagName": "@ab",
+      "pos": 0,
+      "end": 3,
+    },
+  ],
+  "pos": 0,
+  "end": 3,
+}
+`;

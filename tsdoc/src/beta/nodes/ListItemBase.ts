@@ -1,12 +1,13 @@
-import { Token } from "../parser/Token";
-import { Block, IBlockParameters, IBlockContainer, IBlockContainerParameters } from "./Block";
-import { ListBase } from "./ListBase";
-import { ContentUtils } from "./ContentUtils";
-import { Content } from "./Content";
+import { Block, IBlockParameters } from "./Block";
+import { ContentUtils } from "../utils/ContentUtils";
+import { BlockContainerMixin, IBlockContainerParameters } from "./mixins/BlockContainerMixin";
+import { mixin } from "../mixin";
+import { ListChildMixin } from "./mixins/ListChildMixin";
+import { ListItemSiblingMixin } from "./mixins/ListItemSiblingMixin";
 
 export interface IListMarker {
     readonly markerOffset: number;
-    readonly bulletToken: Token;
+    readonly bullet: string;
     readonly tight: boolean;
     readonly padding: number;
 }
@@ -15,44 +16,17 @@ export interface IListItemBaseParameters extends IBlockParameters, IBlockContain
     listMarker: IListMarker;
 }
 
-export interface IListItemContainer extends Content {
-    isListItemContainer(): true;
-    readonly firstChildListItem: ListItemBase | undefined;
-    readonly lastChildListItem: ListItemBase | undefined;
-}
-
-export interface IListItemContainerParameters {
-    content?: ListItemBase | ReadonlyArray<ListItemBase>;
-}
-
-export abstract class ListItemBase extends Block implements IBlockContainer {
+export abstract class ListItemBase extends mixin(Block, [
+    ListChildMixin,
+    ListItemSiblingMixin,
+    BlockContainerMixin,
+]) {
     private _listMarker: IListMarker;
-    
+
     public constructor(parameters: IListItemBaseParameters) {
         super(parameters);
         ContentUtils.appendContent(this, parameters && parameters.content);
         this._listMarker = parameters.listMarker;
-    }
-
-    /**
-     * Gets the parent of this node, if that parent is a `ListBase`.
-     */
-    public get parentList(): ListBase | undefined {
-        return this.parent && this.parent.isList() ? this.parent : undefined;
-    }
-
-    /**
-     * Gets the previous sibling of this node, if that sibling is a `ListItemBase`.
-     */
-    public get previousSiblingListItem(): ListItemBase | undefined {
-        return this.previousSibling && this.previousSibling.isListItem() ? this.previousSibling : undefined;
-    }
-
-    /**
-     * Gets the next sibling of this node, if that sibling is a `ListItemBase`.
-     */
-    public get nextSiblingListItem(): ListItemBase | undefined {
-        return this.nextSibling && this.nextSibling.isListItem() ? this.nextSibling : undefined;
     }
 
     /**
@@ -66,22 +40,25 @@ export abstract class ListItemBase extends Block implements IBlockContainer {
         this.setListMarker(value);
     }
 
-    /** @override */
+    /**
+     * {@inheritDoc Node.isListItem()}
+     * @override
+     */
     public isListItem(): true {
         return true;
     }
 
-    /** @override */
-    public isBlockContainer(): true {
-        return true;
-    }
-
-    /** @virtual */
+    /**
+     * Gets the list marker for this list item.
+     */
     protected getListMarker(): IListMarker {
         return this._listMarker;
     }
 
-    /** @virtual */
+    /**
+     * When overridden in a derived class, sets the list marker for this list item.
+     * @virtual
+     */
     protected setListMarker(value: IListMarker): void {
         if (value !== this._listMarker) {
             this.beforeChange();

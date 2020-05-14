@@ -38,7 +38,8 @@ export class ContentWriter {
         if (this._lastSegment.pos === this.length) {
             this._lastSegment.sourcePos = sourcePos;
         } else {
-            this._sourceSegments.push({ pos: this.length, sourcePos });
+            this._lastSegment = { pos: this.length, sourcePos };
+            this._sourceSegments.push(this._lastSegment);
         }
     }
 
@@ -48,6 +49,20 @@ export class ContentWriter {
     public write(text: string): void {
         if (text) {
             this._text += text;
+        }
+    }
+
+    /**
+     * Copies the contents (with mappings) of another content writer into this content writer.
+     */
+    public copyFrom(other: ContentWriter): void {
+        for (let i = 0; i < other.mappings.length; i++) {
+            const { pos, sourcePos } = other.mappings[i];
+            const end: number = i + 1 < other.mappings.length
+                ? other.mappings[i + 1].pos
+                : other._text.length ;
+            this.addMapping(sourcePos);
+            this.write(other._text.slice(pos, end));
         }
     }
 

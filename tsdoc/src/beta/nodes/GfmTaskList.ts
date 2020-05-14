@@ -1,8 +1,10 @@
 import { SyntaxKind } from "./SyntaxKind";
 import { ListBase, IListBaseParameters } from "./ListBase";
-import { TSDocPrinter } from "../parser/TSDocPrinter";
 import { Node } from "./Node";
 import { GfmTaskListItem } from "./GfmTaskListItem";
+import { IBlockSyntax } from "../syntax/IBlockSyntax";
+import { GfmTaskListSyntax } from "../syntax/gfm/block/GfmTaskListSyntax";
+import { ListItemBase } from "./ListItemBase";
 
 export interface IGfmTaskListParameters extends IListBaseParameters {
 }
@@ -12,31 +14,40 @@ export class GfmTaskList extends ListBase {
         super(parameters);
     }
 
+    /**
+     * {@inheritDoc Node.kind}
+     * @override
+     */
     public get kind(): SyntaxKind.GfmTaskList {
         return SyntaxKind.GfmTaskList;
     }
 
     /**
-     * Gets the first child of this node, if that child is a `GfmTaskListItem`.
+     * {@inheritDoc Node.syntax}
+     * @override
      */
-    public get firstChildGfmTaskListItem(): GfmTaskListItem | undefined {
-        return this.firstChild instanceof GfmTaskListItem ? this.firstChild : undefined;
+    public get syntax(): IBlockSyntax<GfmTaskList> {
+        return GfmTaskListSyntax;
     }
 
     /**
-     * Gets the last child of this node, if that child is a `ListItemBase`.
+     * Gets the first child of this node, if that child is a {@link GfmTaskListItem}.
+     */
+    public get firstChildGfmTaskListItem(): GfmTaskListItem | undefined {
+        const firstChild: ListItemBase | undefined = this.firstChildListItem;
+        return firstChild && firstChild.kind === SyntaxKind.GfmTaskListItem ? firstChild as GfmTaskListItem : undefined;
+    }
+
+    /**
+     * Gets the last child of this node, if that child is a {@link GfmTaskListItem}.
      */
     public get lastChildGfmTaskListItem(): GfmTaskListItem | undefined {
-        return this.lastChild instanceof GfmTaskListItem ? this.lastChild : undefined;
+        const lastChild: ListItemBase | undefined = this.lastChildListItem;
+        return lastChild && lastChild.kind === SyntaxKind.GfmTaskListItem ? lastChild as GfmTaskListItem : undefined;
     }
 
     /** @override */
     public canHaveChild(node: Node): boolean {
-        return node instanceof GfmTaskListItem;
-    }
-
-    /** @override */
-    protected print(printer: TSDocPrinter): void {
-        this.printChildren(printer);
+        return node.kind === SyntaxKind.GfmTaskListItem;
     }
 }

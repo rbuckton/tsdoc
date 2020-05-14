@@ -1,6 +1,6 @@
-import { UnicodeUtils } from "./utils/UnicodeUtils";
+import { UnicodeUtils } from "../utils/UnicodeUtils";
 import { CharacterCodes } from "./CharacterCodes";
-import { ArrayUtils } from "./utils/ArrayUtils";
+import { ArrayUtils } from "../utils/ArrayUtils";
 
 export class Position {
     readonly line: number;
