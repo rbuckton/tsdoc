@@ -1,5 +1,5 @@
-import { Token, TokenLike } from "./Token";
 import { IInlineSyntax } from "../syntax/IInlineSyntax";
+import { Token, TokenLike } from "./Token";
 import { MarkdownLineBreakSyntax } from "../syntax/commonmark/inline/MarkdownLineBreakSyntax";
 import { MarkdownCodeSpanSyntax } from "../syntax/commonmark/inline/MarkdownCodeSpanSyntax";
 import { MarkdownBackslashEscapeSyntax } from "../syntax/commonmark/inline/MarkdownBackslashEscapeSyntax";
@@ -10,7 +10,7 @@ import { MarkdownCharacterEntitySyntax } from "../syntax/commonmark/inline/Markd
 import { Inline } from "../nodes/Inline";
 import { Run } from "../nodes/Run";
 import { MarkdownLinkReference } from "../nodes/MarkdownLinkReference";
-import { IMapping } from "./Mapper";
+import { IMap } from "./Mapper";
 import { MarkdownLinkReferenceSyntax } from "../syntax/commonmark/inline/MarkdownLinkReferenceSyntax";
 import { ParserBase } from "./ParserBase";
 import { Content } from "../nodes/Content";
@@ -22,6 +22,10 @@ import { GfmAutoLinkSyntax } from "../syntax/gfm/inline/GfmAutoLinkSyntax";
 import { MarkdownHtmlSyntax } from "../syntax/commonmark/block/MarkdownHtmlSyntax";
 import { IDelimiterProcessor } from "../syntax/IDelimiterProcessor";
 import { IInlineContainer } from "../nodes/mixins/InlineContainerMixin";
+import { TSDocInlineTagSyntax } from "../syntax/tsdoc/inlines/TSDocInlineTagSyntax";
+import { TSDocConfiguration } from "../../configuration/TSDocConfiguration";
+import { BlockParser } from "./BlockParser";
+import { ParserMessageLog } from "./ParserMessageLog";
 
 export interface IDelimiterFrame {
     prev?: IDelimiterFrame;
@@ -40,19 +44,20 @@ export interface IBracketFrame {
     delimiters?: IDelimiterFrame;
     readonly node: Run;
     readonly token: TokenLike;
+    readonly isLink: boolean;
     active: boolean;
 }
 
 export class InlineParser extends ParserBase {
-    private _document: Document;
+    private _blockParser: BlockParser;
     private _delimiterTokens: Map<TokenLike, Set<IDelimiterProcessor>> = new Map();
     private _delimiters: IDelimiterFrame | undefined;
     private _brackets: IBracketFrame | undefined;
     private _inlineSyntaxParsers: IInlineSyntax[];
 
-    public constructor(document: Document, text: string, sourceMappings: ReadonlyArray<IMapping> | undefined, gfm: boolean) {
-        super(text.replace(/\s+$/, ''), sourceMappings);
-        this._document = document;
+    public constructor(blockParser: BlockParser, text: string, map: IMap | undefined, gfm: boolean, log?: ParserMessageLog) {
+        super(text.replace(/\s+$/, ''), map, log);
+        this._blockParser = blockParser;
         this._inlineSyntaxParsers = InlineParser.getDefaultInlineSyntaxParsers(gfm);
         this.scanner.scan();
     }
@@ -69,11 +74,16 @@ export class InlineParser extends ParserBase {
             MarkdownAutoLinkSyntax,
             MarkdownHtmlSyntax,
             MarkdownCharacterEntitySyntax,
+            TSDocInlineTagSyntax,
         ];
     }
 
+    public get configuration(): TSDocConfiguration {
+        return this._blockParser.configuration;
+    }
+
     public get document(): Document {
-        return this._document;
+        return this._blockParser.document;
     }
 
     public parse(block: IInlineContainer & Content): void {
@@ -245,13 +255,14 @@ export class InlineParser extends ParserBase {
         return this._brackets;
     }
 
-    public pushBracket(node: Run, token: TokenLike): void {
+    public pushBracket(node: Run, token: TokenLike, isLink: boolean): void {
         this._brackets = {
             prev: this._brackets,
             hasBracketAfter: false,
             delimiters: this._delimiters,
             node,
             token,
+            isLink,
             active: true
         };
         if (this._brackets.prev) {
@@ -262,6 +273,16 @@ export class InlineParser extends ParserBase {
     public popBracket(): void {
         if (this._brackets) {
             this._brackets = this._brackets.prev;
+        }
+    }
+
+    public closeOpenLinks(): void {
+        let opener: IBracketFrame | undefined = this.peekBracket();
+        while (opener) {
+            if (opener.isLink) {
+                opener.active = false;
+            }
+            opener = opener.prev;
         }
     }
 

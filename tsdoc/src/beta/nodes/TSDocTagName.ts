@@ -1,18 +1,18 @@
 import { SyntaxKind } from "./SyntaxKind";
 import { SyntaxElement, ISyntaxParameters } from "./SyntaxElement";
 import { ISyntaxElementSyntax } from "../syntax/ISyntaxElementSyntax";
-import { DocTagNameSyntax } from "../syntax/tsdoc/elements/DocTagNameSyntax";
+import { TSDocTagNameSyntax } from "../syntax/tsdoc/elements/TSDocTagNameSyntax";
 
-export interface IDocTagNameParameters extends ISyntaxParameters {
+export interface ITSDocTagNameParameters extends ISyntaxParameters {
     text?: string;
 }
 
-export class DocTagName extends SyntaxElement {
+export class TSDocTagName extends SyntaxElement {
     private _text: string | undefined;
 
-    public constructor(parameters: IDocTagNameParameters = { }) {
+    public constructor(parameters: ITSDocTagNameParameters = { }) {
         super(parameters);
-        if (parameters.text !== undefined && !DocTagNameSyntax.isValidTagName(parameters.text)) {
+        if (parameters.text !== undefined && !TSDocTagNameSyntax.isValidTagName(parameters.text)) {
             throw new Error('Invalid tag name.');
         }
         this._text = parameters.text;
@@ -22,16 +22,16 @@ export class DocTagName extends SyntaxElement {
      * {@inheritdoc Node.kind}
      * @override
      */
-    public get kind(): SyntaxKind.DocTagName {
-        return SyntaxKind.DocTagName;
+    public get kind(): SyntaxKind.TSDocTagName {
+        return SyntaxKind.TSDocTagName;
     }
 
     /**
      * {@inheritdoc Node.syntax}
      * @override
      */
-    public get syntax(): ISyntaxElementSyntax<DocTagName> {
-        return DocTagNameSyntax;
+    public get syntax(): ISyntaxElementSyntax<TSDocTagName> {
+        return TSDocTagNameSyntax;
     }
 
     /**
@@ -42,7 +42,7 @@ export class DocTagName extends SyntaxElement {
     }
 
     public set text(value: string) {
-        if (!DocTagNameSyntax.isValidTagName(value)) {
+        if (!TSDocTagNameSyntax.isValidTagName(value)) {
             throw new Error('Invalid tag name.');
         }
         if (this.text !== value) {

@@ -4,8 +4,8 @@ exports[`DocBlockTag: @a 1`] = `
 Document {
   "kind": Document,
   "children": Array [
-    DocBlockTag {
-      "kind": DocBlockTag,
+    TSDocBlockTag {
+      "kind": TSDocBlockTag,
       "tagName": "@a",
       "pos": 0,
       "end": 2,
@@ -20,8 +20,8 @@ exports[`DocBlockTag: @a_ 1`] = `
 Document {
   "kind": Document,
   "children": Array [
-    DocBlockTag {
-      "kind": DocBlockTag,
+    TSDocBlockTag {
+      "kind": TSDocBlockTag,
       "tagName": "@a_",
       "pos": 0,
       "end": 3,
@@ -36,8 +36,8 @@ exports[`DocBlockTag: @a_9 1`] = `
 Document {
   "kind": Document,
   "children": Array [
-    DocBlockTag {
-      "kind": DocBlockTag,
+    TSDocBlockTag {
+      "kind": TSDocBlockTag,
       "tagName": "@a_9",
       "pos": 0,
       "end": 4,
@@ -52,8 +52,8 @@ exports[`DocBlockTag: @a9 1`] = `
 Document {
   "kind": Document,
   "children": Array [
-    DocBlockTag {
-      "kind": DocBlockTag,
+    TSDocBlockTag {
+      "kind": TSDocBlockTag,
       "tagName": "@a9",
       "pos": 0,
       "end": 3,
@@ -68,8 +68,8 @@ exports[`DocBlockTag: @ab 1`] = `
 Document {
   "kind": Document,
   "children": Array [
-    DocBlockTag {
-      "kind": DocBlockTag,
+    TSDocBlockTag {
+      "kind": TSDocBlockTag,
       "tagName": "@ab",
       "pos": 0,
       "end": 3,

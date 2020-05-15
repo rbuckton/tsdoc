@@ -1,6 +1,6 @@
 import { NamespaceUtils } from "../../../utils/NamespaceUtils";
 import { ISyntaxElementSyntax } from "../../ISyntaxElementSyntax";
-import { DocTagName } from "../../../nodes/DocTagName";
+import { TSDocTagName } from "../../../nodes/TSDocTagName";
 import { Scanner } from "../../../parser/Scanner";
 import { UnicodeUtils } from "../../../utils/UnicodeUtils";
 import { CharacterCodes } from "../../../parser/CharacterCodes";
@@ -9,12 +9,12 @@ import { Preprocessor } from "../../../parser/Preprocessor";
 import { ITSDocEmittable } from "../../ITSDocEmittable";
 import { TSDocWriter } from "../../../emitters/TSDocWriter";
 
-export namespace DocTagNameSyntax {
+export namespace TSDocTagNameSyntax {
     // The following ensures we are properly implementing the interface.
     /*@__PURE__*/ NamespaceUtils.implementsType<
-        & ISyntaxElementSyntax<DocTagName>
-        & ITSDocEmittable<DocTagName>
-    >(DocTagNameSyntax);
+        & ISyntaxElementSyntax<TSDocTagName>
+        & ITSDocEmittable<TSDocTagName>
+    >(TSDocTagNameSyntax);
 
 
     // Special tokens for DocBlock tags
@@ -45,7 +45,8 @@ export namespace DocTagNameSyntax {
     export function isValidTagName(text: string) {
         const scanner: Scanner = new Scanner(text);
         scanner.scan();
-        return scanner.rescan(rescanTsDocTagName) === docTagNameToken;
+        return scanner.rescan(rescanTsDocTagName) === docTagNameToken
+            && scanner.messageTail === undefined;
     }
 
     /**
@@ -56,7 +57,7 @@ export namespace DocTagNameSyntax {
      *
      * @param scanner The scanner used to parse the Inline.
      */
-    export function tryParseSyntaxElement(scanner: Scanner): DocTagName | undefined {
+    export function tryParseSyntaxElement(scanner: Scanner): TSDocTagName | undefined {
         if (scanner.rescan(rescanTsDocTagName) !== docTagNameToken) {
             return undefined;
         }
@@ -64,7 +65,7 @@ export namespace DocTagNameSyntax {
         const pos: number = scanner.startPos;
         const end: number = scanner.pos;
         const tagNameText: string = scanner.getTokenText();
-        const tagName = new DocTagName({ pos, end, text: tagNameText });
+        const tagName = new TSDocTagName({ pos, end, text: tagNameText });
         scanner.scan();
         return tagName;
     }
@@ -74,7 +75,7 @@ export namespace DocTagNameSyntax {
      * @param writer The writer used to write the node.
      * @param node The node to write.
      */
-    export function emitTSDoc(writer: TSDocWriter, node: DocTagName): void {
+    export function emitTSDoc(writer: TSDocWriter, node: TSDocTagName): void {
         writer.write(node.text);
     }
 }

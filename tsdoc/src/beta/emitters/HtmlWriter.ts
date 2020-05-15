@@ -1,4 +1,5 @@
 import { Node } from "../nodes/Node";
+import { TSDocConfiguration } from "../../configuration/TSDocConfiguration";
 
 export class HtmlWriter {
     private _buffer: string = '';
@@ -6,10 +7,16 @@ export class HtmlWriter {
     private _disableTags: number = 0;
     private _emit: (node: Node) => void;
     private _tagFilter: ((tagName: string) => boolean) | undefined;
+    private _configuration: TSDocConfiguration;
 
-    constructor(emit: (node: Node) => void, tagFilter?: (tagName: string) => boolean) {
+    constructor(configuration: TSDocConfiguration, emit: (node: Node) => void, tagFilter?: (tagName: string) => boolean) {
+        this._configuration = configuration;
         this._emit = emit;
         this._tagFilter = tagFilter;
+    }
+
+    public get configuration(): TSDocConfiguration {
+        return this._configuration;
     }
 
     public get tagsDisabled(): boolean {

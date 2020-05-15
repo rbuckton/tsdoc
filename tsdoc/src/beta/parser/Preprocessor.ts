@@ -1,7 +1,7 @@
 import { CharacterCodes } from "./CharacterCodes";
 import { UnicodeUtils } from "../utils/UnicodeUtils";
 import { ArrayUtils } from "../utils/ArrayUtils";
-import { Mapper, IMapping } from "./Mapper";
+import { Mapper, IMap } from "./Mapper";
 
 export type PeekExpectation = ((codePoint: number | undefined) => boolean) | number | undefined;
 
@@ -24,6 +24,7 @@ export interface IPreprocessorState {
  */
 export class Preprocessor {
     private _text: string;
+    private _rawText: string;
     private _pos: number = 0;
     private _line: number = 0;
     private _column: number = 0;
@@ -33,9 +34,10 @@ export class Preprocessor {
     private _mapper: Mapper;
     private _mappingIndex: number = 0;
 
-    public constructor(text: string, mappings?: ReadonlyArray<IMapping>) {
-        this._mapper = new Mapper(mappings);
+    public constructor(text: string, map?: IMap) {
+        this._mapper = new Mapper(map && map.mappings);
         this._text = text;
+        this._rawText = map ? map.rawText : text;
     }
 
     /**
@@ -43,6 +45,13 @@ export class Preprocessor {
      */
     public get text(): string {
         return this._text;
+    }
+
+    /**
+     * Gets the unmapped underlying text
+     */
+    public get rawText(): string {
+        return this._rawText;
     }
 
     /**
@@ -571,5 +580,4 @@ export class Preprocessor {
             count++;
         }
     }
-
 }

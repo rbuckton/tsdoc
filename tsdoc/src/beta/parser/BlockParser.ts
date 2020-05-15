@@ -3,7 +3,7 @@ import { Token } from "./Token";
 import { SyntaxKind } from "../nodes/SyntaxKind";
 import { IBlockSyntax } from "../syntax/IBlockSyntax";
 import { DocumentSyntax } from "../syntax/tsdoc/block/DocumentSyntax";
-import { DocBlockTagSyntax } from "../syntax/tsdoc/block/DocBlockTagSyntax";
+import { TSDocBlockTagSyntax } from "../syntax/tsdoc/block/TSDocBlockTagSyntax";
 import { MarkdownHeadingSyntax } from "../syntax/commonmark/block/MarkdownHeadingSyntax";
 import { MarkdownCodeBlockSyntax } from "../syntax/commonmark/block/MarkdownCodeBlockSyntax";
 import { MarkdownHtmlSyntax } from "../syntax/commonmark/block/MarkdownHtmlSyntax";
@@ -18,7 +18,7 @@ import { MarkdownCodeBlock } from "../nodes/MarkdownCodeBlock";
 import { MarkdownParagraph } from "../nodes/MarkdownParagraph";
 import { Block } from "../nodes/Block";
 import { ContentWriter } from "./ContentWriter";
-import { IMapping } from "./Mapper";
+import { IMapping, IMap } from "./Mapper";
 import { ParserBase } from "./ParserBase";
 import { GfmTableSyntax } from "../syntax/gfm/block/GfmTableSyntax";
 import { GfmTaskListItemSyntax } from "../syntax/gfm/block/GfmTaskListItemSyntax";
@@ -28,6 +28,9 @@ import { GfmTableRowSyntax } from "../syntax/gfm/block/GfmTableRowSyntax";
 import { GfmTableCellSyntax } from "../syntax/gfm/block/GfmTableCellSyntax";
 import { SyntaxKindUtils } from "../utils/SyntaxKindUtils";
 import { Content } from "../nodes/Content";
+import { TSDocConfiguration } from "../../configuration/TSDocConfiguration";
+import { ParserMessageLog } from "./ParserMessageLog";
+import { ParserMessage } from "../../parser/ParserMessage";
 
 // @ts-ignore
 function ASSERT(condition: any, message?: string): void {
@@ -55,6 +58,7 @@ function getState(parser: BlockParser, node: Node): IBlockState {
 }
 
 export class BlockParser extends ParserBase {
+    private _configuration: TSDocConfiguration;
     private _current!: Block;
     private _line: number;
     private _linePos: number;
@@ -66,9 +70,13 @@ export class BlockParser extends ParserBase {
     private _root!: Document;
     private _blockSyntaxParsers: ReadonlyArray<IBlockSyntax<Block>>;
     private _gfm: boolean;
+    private _log: ParserMessageLog;
 
-    public constructor(text: string, sourceMappings?: IMapping[], gfm?: boolean) {
-        super(text, sourceMappings);
+    public constructor(configuration: TSDocConfiguration, text: string, map?: IMap, gfm?: boolean) {
+        const log: ParserMessageLog = new ParserMessageLog();
+        super(text, map, log);
+        this._log = log;
+        this._configuration = configuration;
         this._line = 0;
         this._linePos = 0;
         this._indent = 0;
@@ -77,6 +85,10 @@ export class BlockParser extends ParserBase {
         this._lastNextNonIndentPos = -1;
         this._previousLineEnd = -1;
         this._blockSyntaxParsers = BlockParser.getDefaultBlockSyntaxParsers(this._gfm);
+    }
+
+    public get configuration(): TSDocConfiguration {
+        return this._configuration;
     }
 
     public get gfm(): boolean {
@@ -134,13 +146,17 @@ export class BlockParser extends ParserBase {
         return this._blank;
     }
 
+    public get messages(): ReadonlyArray<ParserMessage> {
+        return this._log.toArray();
+    }
+
     /**
      * Gets the default parsers used to parse block syntax.
      */
     public static getDefaultBlockSyntaxParsers(gfm: boolean): ReadonlyArray<IBlockSyntax<Block>> {
         return [
             DocumentSyntax,
-            DocBlockTagSyntax,
+            TSDocBlockTagSyntax,
             MarkdownBlockQuoteSyntax,
             MarkdownHeadingSyntax,
             MarkdownCodeBlockSyntax,
@@ -411,6 +427,9 @@ export class BlockParser extends ParserBase {
     }
 
     public createInlineParser(text: string, mappings: ReadonlyArray<IMapping>): InlineParser {
-        return new InlineParser(this._root, text, mappings, this._gfm);
+        return new InlineParser(this, text, {
+            rawText: this.rawText,
+            mappings
+        }, this._gfm, this._log);
     }
 }

@@ -1,32 +1,32 @@
 import { SyntaxKind } from "./SyntaxKind";
-import { DocTagName } from "./DocTagName";
+import { TSDocTagName } from "./TSDocTagName";
 import { Block, IBlockParameters } from "./Block";
 import { Node } from "./Node";
 import { SyntaxElement } from "./SyntaxElement";
 import { ContentUtils } from "../utils/ContentUtils";
 import { IBlockSyntax } from "../syntax/IBlockSyntax";
-import { DocBlockTagSyntax } from "../syntax/tsdoc/block/DocBlockTagSyntax";
+import { TSDocBlockTagSyntax } from "../syntax/tsdoc/block/TSDocBlockTagSyntax";
 import { BlockContainerMixin, IBlockContainerParameters } from "./mixins/BlockContainerMixin";
 import { mixin } from "../mixin";
 import { BlockSiblingMixin } from "./mixins/BlockSiblingMixin";
 import { BlockChildMixin } from "./mixins/BlockChildMixin";
 
-export interface IDocBlockTagParameters extends IBlockParameters, IBlockContainerParameters {
-    tagName?: DocTagName | string;
+export interface ITSDocBlockTagParameters extends IBlockParameters, IBlockContainerParameters {
+    tagName?: TSDocTagName | string;
 }
 
-export class DocBlockTag extends mixin(Block, [
+export class TSDocBlockTag extends mixin(Block, [
     BlockChildMixin,
     BlockSiblingMixin,
     BlockContainerMixin
 ]) {
-    private _tagNameSyntax: DocTagName;
+    private _tagNameSyntax: TSDocTagName;
 
-    public constructor(parameters: IDocBlockTagParameters = {}) {
+    public constructor(parameters: ITSDocBlockTagParameters = {}) {
         super(parameters);
         this.attachSyntax(this._tagNameSyntax =
-            parameters.tagName instanceof DocTagName ? parameters.tagName :
-            new DocTagName({ text: parameters.tagName }));
+            parameters.tagName instanceof TSDocTagName ? parameters.tagName :
+            new TSDocTagName({ text: parameters.tagName }));
         ContentUtils.appendContent(this, parameters && parameters.content);
     }
 
@@ -34,16 +34,16 @@ export class DocBlockTag extends mixin(Block, [
      * {@inheritDoc Node.kind}
      * @override
      */
-    public get kind(): SyntaxKind.DocBlockTag {
-        return SyntaxKind.DocBlockTag;
+    public get kind(): SyntaxKind.TSDocBlockTag {
+        return SyntaxKind.TSDocBlockTag;
     }
 
     /**
      * {@inheritDoc Node.syntax}
      * @override
      */
-    public get syntax(): IBlockSyntax<DocBlockTag> {
-        return DocBlockTagSyntax;
+    public get syntax(): IBlockSyntax<TSDocBlockTag> {
+        return TSDocBlockTagSyntax;
     }
 
     /**

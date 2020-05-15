@@ -9,6 +9,7 @@ import { ListMarker } from "../../../nodes/MarkdownListItem";
 import { IHtmlEmittable } from "../../IHtmlEmittable";
 import { ITSDocEmittable } from "../../ITSDocEmittable";
 import { TSDocWriter } from "../../../emitters/TSDocWriter";
+import { Content } from "../../../nodes/Content";
 
 export namespace MarkdownListSyntax {
     // The following ensures we are properly implementing the interface.
@@ -71,7 +72,8 @@ export namespace MarkdownListSyntax {
                     tight = false;
                     break;
                 }
-                child = child.nextSiblingBlock;
+                const nextSibling: Content | undefined = child.nextSibling;
+                child = nextSibling && nextSibling.isBlock() ? nextSibling : undefined;
             }
             item = item.nextSiblingListItem;
         }

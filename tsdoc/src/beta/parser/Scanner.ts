@@ -1,10 +1,18 @@
 import { Preprocessor, IPreprocessorState } from "./Preprocessor";
-import { IMapping, Mapper } from "./Mapper";
+import { Mapper, IMap } from "./Mapper";
 import { Token, TokenLike } from "./Token";
 import { CharacterCodes } from "./CharacterCodes";
 import { UnicodeUtils } from "../utils/UnicodeUtils";
 import { LineMap, Position } from "./LineMap";
 import { StringUtils } from "../utils/StringUtils";
+import { ParserMessage } from "../../parser/ParserMessage";
+import { TSDocMessageId } from "../../parser/TSDocMessageId";
+import { ParserMessageLog } from "./ParserMessageLog";
+
+export interface IMessageNode {
+    readonly message: ParserMessage;
+    readonly previous: IMessageNode | undefined;
+}
 
 export interface IScannerState extends IPreprocessorState {
     readonly startPos: number;
@@ -12,6 +20,7 @@ export interface IScannerState extends IPreprocessorState {
     readonly token: TokenLike;
     readonly tokenValue: string | undefined;
     readonly partialTabColumns: number;
+    readonly messageTail: IMessageNode | undefined;
 }
 
 export interface IRescanStringOptions {
@@ -37,9 +46,11 @@ export class Scanner {
     private _tokenValue: string | undefined;
     private _partialTabColumns: number = 0;
     private _lastState: IScannerState | undefined;
+    private _log: ParserMessageLog;
 
-    public constructor(text: string, sourceSegments?: ReadonlyArray<IMapping>) {
-        this._preprocessor = new Preprocessor(text, sourceSegments);
+    public constructor(text: string, map?: IMap, log = new ParserMessageLog()) {
+        this._preprocessor = new Preprocessor(text, map);
+        this._log = log;
     }
 
     /**
@@ -54,6 +65,17 @@ export class Scanner {
      */
     public get text(): string {
         return this._preprocessor.text;
+    }
+
+    /**
+     * Gets the unmapped underlying text
+     */
+    public get rawText(): string {
+        return this._preprocessor.rawText;
+    }
+
+    public get messageTail(): IMessageNode | undefined {
+        return this._log.tail;
     }
 
     /**
@@ -108,7 +130,8 @@ export class Scanner {
             && this._startColumn === state.startColumn
             && this._token === state.token
             && this._tokenValue === state.tokenValue
-            && this._partialTabColumns === state.partialTabColumns;
+            && this._partialTabColumns === state.partialTabColumns
+            && this._log.tail === state.messageTail;
     }
 
     /**
@@ -122,7 +145,8 @@ export class Scanner {
                 startColumn: this._startColumn,
                 token: this._token,
                 tokenValue: this._tokenValue,
-                partialTabColumns: this._partialTabColumns
+                partialTabColumns: this._partialTabColumns,
+                messageTail: this._log.tail
             };
         }
         return this._lastState;
@@ -139,6 +163,7 @@ export class Scanner {
             this._token = state.token;
             this._tokenValue = state.tokenValue;
             this._partialTabColumns = state.partialTabColumns;
+            this._log.tail = state.messageTail;
             this._preprocessor.setState(state);
             this._lastState = state;
         }
@@ -327,7 +352,7 @@ export class Scanner {
 
     /**
      * Gets the last scanned token.
-     * 
+     *
      * NOTE: This is implemented as a method and not as an accessor so that TypeScript's control flow does not
      * lock in a specific token type in conditional and loop statements.
      */
@@ -402,6 +427,7 @@ export class Scanner {
         const savedToken: TokenLike = this._token;
         const savedTokenValue: string | undefined = this._tokenValue;
         const savedPartialTabColumns: number = this._partialTabColumns;
+        const savedMessageTail: IMessageNode | undefined = this._log.tail;
         let result!: T;
         try {
             result = this._preprocessor.speculate(lookAhead, cb, ...args);
@@ -412,9 +438,14 @@ export class Scanner {
                 this._token = savedToken;
                 this._tokenValue = savedTokenValue;
                 this._partialTabColumns = savedPartialTabColumns;
+                this._log.tail = savedMessageTail;
             }
         }
         return result;
+    }
+
+    public reportError(messageId: TSDocMessageId, messageText: string, pos = this.startPos, end = this.pos): void {
+        this._log.reportError(messageId, messageText, this.rawText, pos, end);
     }
 
     // TODO(rbuckton): Move this to more specific rescanners where appropriate.

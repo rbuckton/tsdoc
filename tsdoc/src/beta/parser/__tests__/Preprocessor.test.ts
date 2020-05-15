@@ -239,11 +239,14 @@ it('slice', () => {
 
 describe('source segments', () => {
     it('read', () => {
-        const preprocessor: Preprocessor = new Preprocessor("0123456789", [
-            { pos: 0, sourcePos: 0 },
-            { pos: 1, sourcePos: 10 },
-            { pos: 6, sourcePos: 50 }
-        ]);
+        const preprocessor: Preprocessor = new Preprocessor("0123456789", {
+            rawText: '0---------12345-----------------------------------6789',
+            mappings: [
+                { pos: 0, sourcePos: 0 },
+                { pos: 1, sourcePos: 10 },
+                { pos: 6, sourcePos: 50 }
+            ]
+        });
         expect(preprocessor.pos).toBe(0); // pos: 0, sourcePos: 0
         preprocessor.read();
         expect(preprocessor.pos).toBe(10); // pos: 1, sourcePos: 10
@@ -253,11 +256,14 @@ describe('source segments', () => {
         expect(preprocessor.pos).toBe(50); // pos: 6, sourcePos: 50
     });
     it('setPos', () => {
-        const preprocessor: Preprocessor = new Preprocessor("0123456789", [
-            { pos: 0, sourcePos: 0 },
-            { pos: 1, sourcePos: 10 },
-            { pos: 6, sourcePos: 50 }
-        ]);
+        const preprocessor: Preprocessor = new Preprocessor("0123456789", {
+            rawText: '0---------12345-----------------------------------6789',
+            mappings: [
+                { pos: 0, sourcePos: 0 },
+                { pos: 1, sourcePos: 10 },
+                { pos: 6, sourcePos: 50 }
+            ]
+        });
         preprocessor.advance(7);
         expect(preprocessor.pos).toBe(51);
         preprocessor.setPos(2);

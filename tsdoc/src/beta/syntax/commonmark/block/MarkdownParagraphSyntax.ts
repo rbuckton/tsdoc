@@ -115,7 +115,7 @@ export namespace MarkdownParagraphSyntax {
         if (content.length) {
             const text: string = content.toString();
             const mappings: IMapping[] = content.mappings;
-            const inlineParser: InlineParser = new InlineParser(parser.document, text, mappings, parser.gfm);
+            const inlineParser: InlineParser = parser.createInlineParser(text, mappings);
             for (const linkReference of inlineParser.parseReferences()) {
                 block.insertSiblingBefore(linkReference);
             }

@@ -5,6 +5,11 @@ export interface IMapping {
     readonly sourcePos: number;
 }
 
+export interface IMap {
+    readonly rawText: string;
+    readonly mappings: ReadonlyArray<IMapping>;
+}
+
 function selectPos(mapping: IMapping): number {
     return mapping.pos;
 }
@@ -16,7 +21,7 @@ function selectSourcePos(mapping: IMapping): number {
 export class Mapper {
     private _mappings: ReadonlyArray<IMapping> | undefined;
 
-    constructor(mappings: ReadonlyArray<IMapping> | undefined) {
+    public constructor(mappings: ReadonlyArray<IMapping> | undefined) {
         if (mappings) {
             if (mappings.length === 0) {
                 mappings = undefined;

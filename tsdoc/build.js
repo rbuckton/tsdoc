@@ -23,6 +23,11 @@ try {
     + ' scripts/spec_gfm.json'
     + ' src/beta/parser/__tests__/gfm.test.ts'
     + ' --gfm', { stdio: 'inherit'});
+  child_process.execSync('"' + process.argv[0] + '"'
+    + ' scripts/generateTests.js'
+    + ' scripts/spec_tsdoc.json'
+    + ' src/beta/parser/__tests__/tsdoc.test.ts'
+    + ' --gfm', { stdio: 'inherit'});
 
   console.log('-- TYPESCRIPT --\n');
   child_process.execSync(path.join(baseDir, 'node_modules/.bin/tsc'), { stdio: 'inherit' });

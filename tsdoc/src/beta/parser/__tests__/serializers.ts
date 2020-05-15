@@ -18,7 +18,7 @@ import { Content } from "../../nodes/Content";
 import { MarkdownListItem } from "../../nodes/MarkdownListItem";
 import { SyntaxElement } from "../../nodes/SyntaxElement";
 import { ArrayUtils } from "../../utils/ArrayUtils";
-import { DocBlockTag } from "../../nodes/DocBlockTag";
+import { TSDocBlockTag } from "../../nodes/TSDocBlockTag";
 
 export type Config = PrettyFormat.Config;
 export type Printer = (value: unknown, config: Config, indentation: string, depth: number, refs: ReadonlyArray<object>) => string;
@@ -255,7 +255,7 @@ function documentToSnapshot(node: Document): object {
     };
 }
 
-function docBlockTagToSnapshot(node: DocBlockTag): object {
+function docBlockTagToSnapshot(node: TSDocBlockTag): object {
     return {
         ...nodeToSnapshotCore(node),
         tagName: node.tagName
@@ -380,7 +380,7 @@ function runToSnapshot(node: Run): object {
 export function nodeToSnapshot(node: Node): object {
     switch (node.kind) {
         case SyntaxKind.Document: return documentToSnapshot(node as Document);
-        case SyntaxKind.DocBlockTag: return docBlockTagToSnapshot(node as DocBlockTag);
+        case SyntaxKind.TSDocBlockTag: return docBlockTagToSnapshot(node as TSDocBlockTag);
         case SyntaxKind.MarkdownCodeBlock: return markdownCodeBlockToSnapshot(node as MarkdownCodeBlock);
         case SyntaxKind.MarkdownHeading: return markdownHeadingToSnapshot(node as MarkdownHeading);
         case SyntaxKind.MarkdownList: return markdownListToSnapshot(node as MarkdownList);

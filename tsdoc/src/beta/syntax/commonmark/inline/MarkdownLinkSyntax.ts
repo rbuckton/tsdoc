@@ -21,6 +21,7 @@ import { IHtmlEmittable } from "../../IHtmlEmittable";
 import { HtmlWriter } from "../../../emitters/HtmlWriter";
 import { ITSDocEmittable } from "../../ITSDocEmittable";
 import { TSDocWriter } from "../../../emitters/TSDocWriter";
+import { Content } from "../../../nodes/Content";
 
 export namespace MarkdownLinkSyntax {
     // The following ensures we are properly implementing the interface.
@@ -61,7 +62,7 @@ export namespace MarkdownLinkSyntax {
 
         // push the bracket and return it.
         const node: Run = new Run({ pos, end, text });
-        parser.pushBracket(node, token);
+        parser.pushBracket(node, token, /*isLink*/ token === Token.OpenBracketToken);
         return node;
     }
 
@@ -138,16 +139,6 @@ export namespace MarkdownLinkSyntax {
         | IReferenceLink
         ;
 
-    function closeOpenLinks(parser: InlineParser) {
-        let opener: IBracketFrame | undefined = parser.peekBracket();
-        while (opener) {
-            if (opener.token === Token.OpenBracketToken) {
-                opener.active = false;
-            }
-            opener = opener.prev;
-        }
-    }
-
     /**
      * Try to match close bracket against an opening in the delimiter
      * stack. Add either a link or image, or a plain `[` character,
@@ -217,21 +208,21 @@ export namespace MarkdownLinkSyntax {
 
         // move everything between the open and closer into the inline
         let current: Inline | undefined = opener.node.nextSiblingInline;
-        let next: Inline | undefined;
+        let next: Content | undefined;
         while (current) {
-            next = current.nextSiblingInline;
+            next = current.nextSibling;
             node.appendChild(current);
-            current = next;
+            current = next && next.isInline() ? next : undefined;
         }
 
-        // process emphais delimiters inside of the link text
+        // process emphasis delimiters inside of the link text
         parser.processDelimiters(opener.delimiters);
         parser.popBracket();
         opener.node.removeNode();
 
         // Links cannot have nested links.
         if (opener.token === Token.OpenBracketToken) {
-            closeOpenLinks(parser);
+            parser.closeOpenLinks();
         }
 
         return node;
@@ -247,8 +238,8 @@ export namespace MarkdownLinkSyntax {
      * @param container The container for the Inline.
      */
     export function tryParseInline(parser: InlineParser): Inline | undefined {
-        return tryParseLinkOrImageStart(parser)
-            || tryParseLinkOrImageRest(parser);
+        return parser.tryParse(tryParseLinkOrImageStart)
+            || parser.tryParse(tryParseLinkOrImageRest);
     }
 
     function emitHtmlMarkdownLink(writer: HtmlWriter, node: MarkdownLink): void {

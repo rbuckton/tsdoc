@@ -3,11 +3,12 @@
 import { BlockParser } from "../../../parser/BlockParser";
 import { Document } from "../../../nodes/Document";
 import { SnapshotSerializer } from "../../../parser/__tests__/serializers";
+import { TSDocConfiguration } from "../../../../configuration/TSDocConfiguration";
 
 expect.addSnapshotSerializer(SnapshotSerializer.serializer);
 
 function parse(text: string): Document {
-    const parser: BlockParser = new BlockParser(text, undefined, false);
+    const parser: BlockParser = new BlockParser(new TSDocConfiguration(), text, undefined, false);
     return parser.parse();
 }
 

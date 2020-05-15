@@ -2,6 +2,7 @@ import { MarkdownUtils } from "../utils/MarkdownUtils";
 import { Node } from "../nodes/Node";
 import { Content } from "../nodes/Content";
 import { SyntaxElement } from "../nodes/SyntaxElement";
+import { TSDocConfiguration } from "../../configuration/TSDocConfiguration";
 
 export interface IBlockInfo {
     indent?: number;
@@ -19,9 +20,15 @@ export class TSDocWriter {
     private _text: string = '';
     private _atStartOfLine: boolean = false;
     private _emit: (node: Node) => void;
+    private _configuration: TSDocConfiguration;
 
-    constructor(emit: (node: Node) => void) {
+    constructor(configuration: TSDocConfiguration, emit: (node: Node) => void) {
+        this._configuration = configuration;
         this._emit = emit;
+    }
+
+    public get configuration(): TSDocConfiguration {
+        return this._configuration;
     }
 
     public pushBlock(block: IBlockInfo): void {

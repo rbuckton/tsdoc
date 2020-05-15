@@ -4,16 +4,17 @@ import { BlockParser } from "../BlockParser";
 import { Document } from "../../nodes/Document";
 import { SnapshotSerializer } from "./serializers";
 import { HtmlEmitter } from "../../emitters/HtmlEmitter";
+import { TSDocConfiguration } from "../../../configuration/TSDocConfiguration";
 
 expect.addSnapshotSerializer(SnapshotSerializer.serializer);
 
 function parse(text: string): Document {
-    const parser: BlockParser = new BlockParser(text, undefined, false);
+    const parser: BlockParser = new BlockParser(new TSDocConfiguration(), text, undefined, false);
     return parser.parse();
 }
 
 function emit(document: Document): string {
-    const emitter: HtmlEmitter = new HtmlEmitter();
+    const emitter: HtmlEmitter = new HtmlEmitter(new TSDocConfiguration());
     emitter.emit(document);
     return emitter.toString();
 }

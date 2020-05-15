@@ -1,0 +1,48 @@
+[
+    {
+        "markdown": "{@foo bar}",
+        "html": "<p><span data-tagname=\"@foo\"><em>@foo</em> &mdash; <a href=\"bar\">bar</a></span></p>\n",
+        "custom": "Basic Inline",
+        "section": "Inline Tags (extension)"
+    },
+
+    {
+        "markdown": "{@link foo}",
+        "html": "<p><a href=\"foo\">foo</a></p>\n",
+        "custom": "Basic Link",
+        "section": "Inline Tags (extension)"
+    },
+    {
+        "markdown": "{@link foo|bar}",
+        "html": "<p><a href=\"foo\">bar</a></p>\n",
+        "custom": "Link with title",
+        "section": "Inline Tags (extension)"
+    },
+    {
+        "markdown": "|a|\n|-|\n{@link foo\\|bar}|",
+        "html": "<table>\n<thead>\n<tr>\n<th>a</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><a href=\"foo\">bar</a></td>\n</tr>\n</tbody>\n</table>\n",
+        "custom": "Link with title in table",
+        "section": "Inline Tags (extension)"
+    },
+
+    {
+        "markdown": "@remarks this is a test",
+        "html": "@remarks &mdash;\n<p>this is a test</p>\n",
+        "custom": "Basic Block",
+        "section": "Block Tags (extension)"
+    },
+
+    {
+        "markdown": "@public",
+        "html": "@public\n",
+        "custom": "Single Modifier",
+        "section": "Modifier Tags (extension)"
+    },
+
+    {
+        "markdown": "@param foo bar",
+        "html": "@param &mdash; foo\n<p>bar</p>\n",
+        "custom": "Basic Parameter",
+        "section": "Param Tags (extension)"
+    }
+]

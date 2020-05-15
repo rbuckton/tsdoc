@@ -147,7 +147,7 @@ export namespace GfmTableSyntax {
         }
 
         // create a new scanner from the paragraph's contents to use to parse the header row
-        const scanner: Scanner = new Scanner(content.toString(), content.mappings);
+        const scanner: Scanner = new Scanner(content.toString(), { rawText: parser.rawText, mappings: content.mappings });
         scanner.scan();
 
         // copy non-table paragraph content to a new content writer.

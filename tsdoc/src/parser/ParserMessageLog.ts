@@ -9,7 +9,11 @@ import { TSDocMessageId } from './TSDocMessageId';
  * Used to report errors and warnings that occurred during parsing.
  */
 export class ParserMessageLog {
-  private _messages: ParserMessage[] = [];
+  private _messages: ParserMessage[];
+
+  public constructor(messages?: ReadonlyArray<ParserMessage>) {
+    this._messages = messages ? messages.slice() : [];
+  }
 
   /**
    * The unfiltered list of all messages.

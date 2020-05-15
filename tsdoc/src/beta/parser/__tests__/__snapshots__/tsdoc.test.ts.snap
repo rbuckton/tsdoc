@@ -1,0 +1,231 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Block Tags (extension) Basic Block 1`] = `
+Document {
+  "kind": Document,
+  "children": Array [
+    TSDocBlockTag {
+      "kind": TSDocBlockTag,
+      "children": Array [
+        MarkdownParagraph {
+          "kind": MarkdownParagraph,
+          "children": Array [
+            Run {
+              "kind": Run,
+              "text": "this is a test",
+              "pos": 9,
+              "end": 23,
+            },
+          ],
+          "pos": 9,
+          "end": 23,
+        },
+      ],
+      "tagName": "@remarks",
+      "pos": 0,
+      "end": 23,
+    },
+  ],
+  "pos": 0,
+  "end": 23,
+}
+`;
+
+exports[`Inline Tags (extension) Basic Inline 1`] = `
+Document {
+  "kind": Document,
+  "children": Array [
+    MarkdownParagraph {
+      "kind": MarkdownParagraph,
+      "children": Array [
+        TSDocInlineTag {
+          "kind": TSDocInlineTag,
+          "children": Array [
+            Run {
+              "kind": Run,
+              "text": "bar",
+              "pos": 6,
+              "end": 9,
+            },
+          ],
+          "pos": 0,
+          "end": 10,
+        },
+      ],
+      "pos": 0,
+      "end": 10,
+    },
+  ],
+  "pos": 0,
+  "end": 10,
+}
+`;
+
+exports[`Inline Tags (extension) Basic Link 1`] = `
+Document {
+  "kind": Document,
+  "children": Array [
+    MarkdownParagraph {
+      "kind": MarkdownParagraph,
+      "children": Array [
+        TSDocInlineTag {
+          "kind": TSDocInlineTag,
+          "children": Array [
+            Run {
+              "kind": Run,
+              "text": "foo",
+              "pos": 7,
+              "end": 10,
+            },
+          ],
+          "pos": 0,
+          "end": 11,
+        },
+      ],
+      "pos": 0,
+      "end": 11,
+    },
+  ],
+  "pos": 0,
+  "end": 11,
+}
+`;
+
+exports[`Inline Tags (extension) Link with title 1`] = `
+Document {
+  "kind": Document,
+  "children": Array [
+    MarkdownParagraph {
+      "kind": MarkdownParagraph,
+      "children": Array [
+        TSDocInlineTag {
+          "kind": TSDocInlineTag,
+          "children": Array [
+            Run {
+              "kind": Run,
+              "text": "bar",
+              "pos": 11,
+              "end": 14,
+            },
+          ],
+          "pos": 0,
+          "end": 15,
+        },
+      ],
+      "pos": 0,
+      "end": 15,
+    },
+  ],
+  "pos": 0,
+  "end": 15,
+}
+`;
+
+exports[`Inline Tags (extension) Link with title in table 1`] = `
+Document {
+  "kind": Document,
+  "children": Array [
+    GfmTable {
+      "kind": GfmTable,
+      "children": Array [
+        GfmTableRow {
+          "kind": GfmTableRow,
+          "children": Array [
+            GfmTableCell {
+              "kind": GfmTableCell,
+              "children": Array [
+                Run {
+                  "kind": Run,
+                  "text": "a",
+                  "pos": 1,
+                  "end": 2,
+                },
+              ],
+              "pos": 1,
+              "end": 2,
+            },
+          ],
+          "pos": 0,
+          "end": 3,
+        },
+        GfmTableRow {
+          "kind": GfmTableRow,
+          "children": Array [
+            GfmTableCell {
+              "kind": GfmTableCell,
+              "children": Array [
+                TSDocInlineTag {
+                  "kind": TSDocInlineTag,
+                  "children": Array [
+                    Run {
+                      "kind": Run,
+                      "text": "bar",
+                      "pos": 20,
+                      "end": 23,
+                    },
+                  ],
+                  "pos": 8,
+                  "end": 24,
+                },
+              ],
+              "pos": 8,
+              "end": 24,
+            },
+          ],
+          "pos": 8,
+          "end": 25,
+        },
+      ],
+      "pos": 0,
+      "end": 25,
+    },
+  ],
+  "pos": 0,
+  "end": 25,
+}
+`;
+
+exports[`Modifier Tags (extension) Single Modifier 1`] = `
+Document {
+  "kind": Document,
+  "children": Array [
+    TSDocModifierTag {
+      "kind": TSDocModifierTag,
+      "pos": 0,
+      "end": 7,
+    },
+  ],
+  "pos": 0,
+  "end": 7,
+}
+`;
+
+exports[`Param Tags (extension) Basic Parameter 1`] = `
+Document {
+  "kind": Document,
+  "children": Array [
+    TSDocParamTag {
+      "kind": TSDocParamTag,
+      "children": Array [
+        MarkdownParagraph {
+          "kind": MarkdownParagraph,
+          "children": Array [
+            Run {
+              "kind": Run,
+              "text": "bar",
+              "pos": 11,
+              "end": 14,
+            },
+          ],
+          "pos": 11,
+          "end": 14,
+        },
+      ],
+      "pos": 7,
+      "end": 14,
+    },
+  ],
+  "pos": 0,
+  "end": 14,
+}
+`;
