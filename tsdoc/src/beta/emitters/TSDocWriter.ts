@@ -51,7 +51,7 @@ export class TSDocWriter {
         }));
     }
 
-    public writeln(): void {
+    public writeLine(): void {
         this._writeBlocksIfNeeded();
         this._text += '\n';
         this._atStartOfLine = true;

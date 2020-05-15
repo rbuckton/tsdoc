@@ -27,21 +27,21 @@
 
     {
         "markdown": "@remarks this is a test",
-        "html": "@remarks &mdash;\n<p>this is a test</p>\n",
+        "html": "<div data-tagname=\"@remarks\"><em>@remarks</em> &mdash;\n<p>this is a test</p>\n</div>\n",
         "custom": "Basic Block",
         "section": "Block Tags (extension)"
     },
 
     {
         "markdown": "@public",
-        "html": "@public\n",
+        "html": "<div data-tagname=\"@public\"><em>@public</em></div>\n",
         "custom": "Single Modifier",
         "section": "Modifier Tags (extension)"
     },
 
     {
         "markdown": "@param foo bar",
-        "html": "@param &mdash; foo\n<p>bar</p>\n",
+        "html": "<div data-tagname=\"@param\"><em>@param</em> &mdash; <code>foo</code> &mdash;\n<p>bar</p>\n</div>\n",
         "custom": "Basic Parameter",
         "section": "Param Tags (extension)"
     }

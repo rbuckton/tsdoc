@@ -15,6 +15,7 @@ import { TSDocInlineTag } from "../../../nodes/TSDocInlineTag";
 import { Run } from "../../../nodes/Run";
 import { Content } from "../../../nodes/Content";
 import { TSDocTagDefinition } from "../../../../configuration/TSDocTagDefinition";
+import { TSDocMessageId } from "../../../../parser/TSDocMessageId";
 
 export namespace TSDocInlineTagSyntax {
     // The following ensures we are properly implementing the interface.
@@ -56,17 +57,26 @@ export namespace TSDocInlineTagSyntax {
         const scanner: Scanner = parser.scanner;
         const pos: number = scanner.startPos;
 
-        if (!scanner.expect(Token.OpenBraceToken)) {
+        if (!scanner.expect(Token.OpenBraceToken) ||
+            scanner.token() !== Token.AtToken) {
             return undefined;
         }
 
         const tagName: TSDocTagName | undefined = scanner.tryParse(TSDocTagNameSyntax.tryParseSyntaxElement);
         if (!tagName) {
+            scanner.reportError(
+                TSDocMessageId.MalformedInlineTag,
+                'Expecting a TSDoc inline tag name after the "{@" characters'
+            );
             return undefined;
         }
 
         // inline tag names must be followed by whitespace
         if (!scanner.scanWhitespaceAndNewLines()) {
+            scanner.reportError(
+                TSDocMessageId.CharactersAfterInlineTag,
+                `The token ${JSON.stringify(scanner.getTokenText())} cannot appear after the TSDoc tag name; expecting a space`
+            )
             return undefined;
         }
 
@@ -86,6 +96,10 @@ export namespace TSDocInlineTagSyntax {
         if (!(spaceAfterDestination || hasBar)) {
             // inline tags without text must end with a `}`
             if (!scanner.expect(Token.CloseBraceToken)) {
+                scanner.reportError(
+                    TSDocMessageId.MalformedInlineTag,
+                    '"}" expected'
+                );
                 return undefined;
             }
             const end: number = scanner.startPos;
@@ -190,7 +204,7 @@ export namespace TSDocInlineTagSyntax {
             writer.writeTag('em');
             writer.write(tagName);
             writer.writeTag('/em');
-            writer.writeHtml(' &mdash; ');
+            writer.writeRaw(' &mdash; ');
         }
         const attrs: [string, string][] = [];
         attrs.push(['href', writer.escapeText(node.destination)]);

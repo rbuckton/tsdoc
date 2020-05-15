@@ -166,6 +166,6 @@ export namespace MarkdownThematicBreakSyntax {
      */
     export function emitTSDoc(writer: TSDocWriter, node: MarkdownThematicBreak): void {
         writer.write(StringUtils.repeat(node.style, 3));
-        writer.writeln();
+        writer.writeLine();
     }
 }

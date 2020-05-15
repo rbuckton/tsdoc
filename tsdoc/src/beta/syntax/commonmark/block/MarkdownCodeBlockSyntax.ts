@@ -320,20 +320,20 @@ export namespace MarkdownCodeBlockSyntax {
                 writer.write(' ');
                 writer.write(node.info);
             }
-            writer.writeln();
+            writer.writeLine();
             for (const line of node.literal.split(/\r\n?|\n/g)) {
                 writer.write(line);
-                writer.writeln();
+                writer.writeLine();
             }
             writer.write(StringUtils.repeat(node.codeFence.fenceChar, node.codeFence.fenceLength));
-            writer.writeln();
+            writer.writeLine();
             writer.popBlock();
         }
         else {
             writer.pushBlock({ indent: 4 });
             for (const line of node.literal.split(/\r\n?|\n/g)) {
                 writer.write(line);
-                writer.writeln();
+                writer.writeLine();
             }
             writer.popBlock();
         }

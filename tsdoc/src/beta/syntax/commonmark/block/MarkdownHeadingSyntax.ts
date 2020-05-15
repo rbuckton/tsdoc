@@ -242,6 +242,6 @@ export namespace MarkdownHeadingSyntax {
             writer.writeContents(node);
             writer.write(node.level === 1 ? '===' : '---');
         }
-        writer.writeln();
+        writer.writeLine();
     }
 }

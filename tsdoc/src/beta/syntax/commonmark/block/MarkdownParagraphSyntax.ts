@@ -180,6 +180,6 @@ export namespace MarkdownParagraphSyntax {
      */
     export function emitTSDoc(writer: TSDocWriter, node: MarkdownParagraph): void {
         writer.writeContents(node);
-        writer.writeln();
+        writer.writeLine();
     }
 }

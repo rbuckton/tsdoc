@@ -597,7 +597,7 @@ export namespace MarkdownHtmlSyntax {
     export function emitTSDoc(writer: TSDocWriter, node: MarkdownHtmlBlock | MarkdownHtmlInline): void {
         writer.write(node.literal);
         if (node.kind === SyntaxKind.MarkdownHtmlBlock) {
-            writer.writeln();
+            writer.writeLine();
         }
     }
 }

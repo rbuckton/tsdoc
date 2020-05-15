@@ -100,10 +100,10 @@ export namespace MarkdownLineBreakSyntax {
         switch (node.kind) {
             case SyntaxKind.MarkdownHardBreak:
                 writer.write(node.backslash ? '\\' : '  ');
-                writer.writeln();
+                writer.writeLine();
                 break;
             case SyntaxKind.MarkdownSoftBreak:
-                writer.writeln();
+                writer.writeLine();
                 break;
         }
     }

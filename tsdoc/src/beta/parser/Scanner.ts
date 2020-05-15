@@ -438,6 +438,8 @@ export class Scanner {
                 this._token = savedToken;
                 this._tokenValue = savedTokenValue;
                 this._partialTabColumns = savedPartialTabColumns;
+            }
+            if (lookAhead) {
                 this._log.tail = savedMessageTail;
             }
         }

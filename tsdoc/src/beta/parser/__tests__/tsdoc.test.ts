@@ -59,7 +59,7 @@ describe("Inline Tags (extension)", () => {
 describe("Block Tags (extension)", () => {
     it("Basic Block", () => {
         const markdown: string = "@remarks this is a test";
-        const expected: string = "@remarks &mdash;\n<p>this is a test</p>\n";
+        const expected: string = "<div data-tagname=\"@remarks\"><em>@remarks</em> &mdash;\n<p>this is a test</p>\n</div>\n";
         const document: Document = parse(markdown);
         const actual: string = emit(document);
         expect(actual).toBe(expected);
@@ -69,7 +69,7 @@ describe("Block Tags (extension)", () => {
 describe("Modifier Tags (extension)", () => {
     it("Single Modifier", () => {
         const markdown: string = "@public";
-        const expected: string = "@public\n";
+        const expected: string = "<div data-tagname=\"@public\"><em>@public</em></div>\n";
         const document: Document = parse(markdown);
         const actual: string = emit(document);
         expect(actual).toBe(expected);
@@ -79,7 +79,7 @@ describe("Modifier Tags (extension)", () => {
 describe("Param Tags (extension)", () => {
     it("Basic Parameter", () => {
         const markdown: string = "@param foo bar";
-        const expected: string = "@param &mdash; foo\n<p>bar</p>\n";
+        const expected: string = "<div data-tagname=\"@param\"><em>@param</em> &mdash; <code>foo</code> &mdash;\n<p>bar</p>\n</div>\n";
         const document: Document = parse(markdown);
         const actual: string = emit(document);
         expect(actual).toBe(expected);
